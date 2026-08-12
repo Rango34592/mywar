@@ -404,6 +404,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .screen.active{display:flex!important;flex-direction:column!important}
   #screen-onlinepvp{overflow-y:auto!important;flex-shrink:0!important}
   #screen-onlinepvp>div{flex-shrink:0!important}
+  #screen-codex{overflow-y:auto!important;flex-shrink:0!important}
+  #screen-codex>div{flex-shrink:0!important}
   
   /* === Nav: compact === */
   #nav{height:var(--mobile-nav-h)!important;gap:1px;padding:0 2px}
@@ -584,7 +586,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .pvp-e-chip .se-star{font-size:5px!important}
 
   /* === Codex: scrollable with bigger cards === */
-  #screen-codex{overflow-y:auto!important}
+  #screen-codex{overflow-y:auto!important;flex-shrink:0!important}
+  #screen-codex>div{flex-shrink:0!important}
   .cd-header{padding:6px 8px!important;margin-bottom:0!important}
   .cd-tabs{gap:2px!important;margin-bottom:2px!important}
   .cd-tab{padding:3px 10px!important;font-size:10px!important}
@@ -595,7 +598,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .cd-progress-text{font-size:8px!important;margin-top:2px!important}
   .cd-filters{gap:2px!important;padding:4px 8px!important;margin-bottom:0!important}
   .cd-filter{padding:3px 8px!important;font-size:9px!important;border-radius:12px!important}
-  .cd-list{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))!important;gap:8px!important;padding:8px!important;flex:1!important;overflow-y:auto!important;align-content:start!important}
+  .cd-list{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))!important;gap:8px!important;padding:8px!important;align-content:start!important}
   .cd-card{padding:6px 4px!important;border-radius:8px!important}
   .cd-card-img{width:72px!important;height:72px!important;margin:0 auto 3px!important;border-width:1px!important;border-radius:6px!important}
   .cd-card-name{font-size:11px!important}
@@ -682,6 +685,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .screen{height:calc(100vh - var(--mobile-nav-h))!important}
   #screen-onlinepvp{overflow-y:auto!important;flex-shrink:0!important}
   #screen-onlinepvp>div{flex-shrink:0!important}
+  #screen-codex{overflow-y:auto!important;flex-shrink:0!important}
+  #screen-codex>div{flex-shrink:0!important}
   #nav{height:36px!important}
   .ns-lbl{font-size:7px!important}
   .ns-ring{font-size:14px!important;width:18px!important;height:18px!important}
