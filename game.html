@@ -2621,7 +2621,7 @@ function doEquipGacha(type){
   if(G.gold<cost){toast('金币不足！');return}
   G.gold-=cost;let star;const r=Math.random()*100;
   if(type==='normal'){if(r<.5)star=4;else if(r<5)star=3;else if(r<40)star=2;else star=1}
-  else{if(r<.03)star=6;else if(r<1.5)star=5;else if(r<18)star=4;else star=3}
+  else{if(r<.1)star=6;else if(r<3)star=5;else if(r<20)star=4;else star=3}
   const keys=Object.keys(EQ),eid=keys[ri(0,keys.length-1)],uid=G.eqUid++;
   addEquip({id:eid,star,uid});
   const ed=EQ[eid];
@@ -3899,7 +3899,7 @@ function doRecruitTarget(type){
     G.gold-=cost;
     let star;const r=Math.random()*100;
     if(type==='normal'){if(r<.5)star=4;else if(r<5)star=3;else if(r<40)star=2;else star=1}
-    else{if(r<.03)star=6;else if(r<1.5)star=5;else if(r<18)star=4;else star=3}
+    else{if(r<.1)star=6;else if(r<3)star=5;else if(r<20)star=4;else star=3}
     // 30% chance to get selected hero, 70% random
     let finalId=hid;
     const hit=Math.random()<0.3;
@@ -3930,7 +3930,7 @@ function doEquipGachaTarget(type){
     G.gold-=cost;
     let star;const r=Math.random()*100;
     if(type==='normal'){if(r<.5)star=4;else if(r<5)star=3;else if(r<40)star=2;else star=1}
-    else{if(r<.03)star=6;else if(r<1.5)star=5;else if(r<18)star=4;else star=3}
+    else{if(r<.1)star=6;else if(r<3)star=5;else if(r<20)star=4;else star=3}
     // 30% chance to get selected equipment, 70% random
     let finalId=eid;
     const hit=Math.random()<0.3;
@@ -3955,7 +3955,7 @@ function doRecruit(type){
   if(G.gold<cost){toast('金币不足！');return}
   G.gold-=cost;let star;const r=Math.random()*100;
   if(type==='normal'){if(r<.5)star=4;else if(r<5)star=3;else if(r<40)star=2;else star=1}
-  else{if(r<.03)star=6;else if(r<1.5)star=5;else if(r<18)star=4;else star=3}
+  else{if(r<.1)star=6;else if(r<3)star=5;else if(r<20)star=4;else star=3}
   const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)],uid=G.uid++;
   addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:0});const d=H[hid];
   sfx('recruit');
@@ -7597,17 +7597,17 @@ function endWorldBossBattle(){
   const totalGold=baseGold+rankBonus;
   G.gold+=totalGold;
   rewHtml+=`<div class="ri">💰 金币 +${totalGold}${rankBonus>300?` <span style="color:#ff0">(排名奖励+${rankBonus})</span>`:''}</div>`;
-  // Top 3: guaranteed 5★ hero (6★ needs to be earned)
+  // Top 3: guaranteed 6★ hero
   if(myRank<=3){
     const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];const uid=G.uid++;
-    addHero({id:hid,star:5,uid,eq:[null,null],relicUid:null,rank:0});
-    rewHtml+=`<div class="ri" style="color:var(--gold)">🃏 排名奖励 ${H[hid].name} ★★★★★</div>`;
+    addHero({id:hid,star:6,uid,eq:[null,null],relicUid:null,rank:0});
+    rewHtml+=`<div class="ri" style="color:var(--gold)">🃏 排名奖励 ${H[hid].name} ★★★★★★</div>`;
   }
-  // Top 10: guaranteed 5★ equipment
+  // Top 10: guaranteed 6★ equipment
   if(myRank<=10){
     const eqKeys=Object.keys(EQ),eid=eqKeys[ri(0,eqKeys.length-1)];const eqUid=G.eqUid++;
-    addEquip({id:eid,star:5,uid:eqUid});
-    rewHtml+=`<div class="ri" style="color:var(--gold)">🔧 排名奖励 ${EQ[eid].name} ★★★★★</div>`;
+    addEquip({id:eid,star:6,uid:eqUid});
+    rewHtml+=`<div class="ri" style="color:var(--gold)">🔧 排名奖励 ${EQ[eid].name} ★★★★★★</div>`;
   }
   // Top 20: relic
   if(myRank<=20){
