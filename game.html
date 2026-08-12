@@ -1138,11 +1138,11 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
 </script>
    <!-- 存档选择界面 -->
   <div id="titleScreen" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a0a00 0%,#000 80%)">
-    <div style="text-align:center;max-width:520px;width:90%">
+    <div style="text-align:center;max-width:520px;width:90%;max-height:100vh;overflow-y:auto;padding:10px 0">
       <div style="font-size:42px;font-weight:bold;color:#ffd700;text-shadow:0 0 20px #ffd700,0 0 40px #8b4513;margin-bottom:8px;letter-spacing:4px" class="med-title">⚔ 我的战争 ⚔</div>
-      <div style="font-size:13px;color:#8b6914;margin-bottom:30px">中世纪回合制卡牌对战</div>
+      <div style="font-size:13px;color:#8b6914;margin-bottom:20px">中世纪回合制卡牌对战</div>
       <div id="titleSlots"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
         <button onclick="exportSave()" style="padding:6px 16px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:1px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:12px">📥 导出存档</button>
         <button onclick="importSave()" style="padding:6px 16px;background:linear-gradient(180deg,#2a6a4a,#1a4a2a);color:#5acc8a;border:1px solid #3a9e5c;border-radius:6px;cursor:pointer;font-size:12px">📤 导入存档</button>
       </div>
@@ -9849,6 +9849,13 @@ function olCopyIp(){
 function olCheckServer(){
   const checkEl=document.getElementById('olServerCheck');
   if(!checkEl)return;
+  // 非本地网络（github.io等）无法检测本地WS服务器
+  const isLocal=location.hostname==='localhost'||location.hostname==='127.0.0.1'||/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname)&&location.hostname.startsWith('192.168.');
+  if(!isLocal){
+    checkEl.innerHTML='📱 远程设备 — 请选择「加入房间」并输入房主电脑IP';
+    checkEl.style.color='#3498db';
+    return;
+  }
   const host=location.hostname||'localhost';
   const wsUrl='ws://'+host+':8766';
   try{
@@ -10527,18 +10534,18 @@ function renderTitleScreen(){
     if(sv){
       const dt=new Date(sv.time);
       const timeStr=dt.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-      html+=`<div style="background:linear-gradient(135deg,#2a1a0a,#1a0a00);border:2px solid #8b6914;border-radius:12px;padding:16px;margin-bottom:12px;position:relative">
-        <div style="font-size:18px;color:#ffd700;font-weight:bold">${sv.user}${sv.data.arena&&sv.data.arena.arenaChamp?' <span style="font-size:12px">🏆竞技之王</span>':''}${sv.data.arena&&sv.data.arena.titanTitle?' <span style="font-size:12px">👑巨物猎人</span>':''}</div>
-        <div style="font-size:11px;color:#8b6914;margin:4px 0">⏱ ${timeStr}　💰 ${sv.data.gold}　⚔ 英雄×${sv.data.heroes.length}　📋 ${sv.data.cleared}/100关${sv.data.arena?'　🏅排名'+sv.data.arena.rank:''}</div>
-        <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
-          <button onclick="startSlot(${i},false)" style="flex:1;padding:8px;background:linear-gradient(180deg,#8b6914,#5a3a0a);color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer;font-weight:bold">继续游戏</button>
-          <button onclick="exportSlot(${i})" style="padding:8px 12px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:1px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:12px">导出</button>
-          <button onclick="confirmDelete(${i})" style="padding:8px 12px;background:linear-gradient(180deg,#4a1a1a,#2a0a0a);color:#c0392b;border:1px solid #c0392b;border-radius:6px;cursor:pointer;font-size:12px">删除</button>
+      html+=`<div style="background:linear-gradient(135deg,#2a1a0a,#1a0a00);border:2px solid #8b6914;border-radius:12px;padding:10px 16px;margin-bottom:8px;position:relative">
+        <div style="font-size:16px;color:#ffd700;font-weight:bold">${sv.user}${sv.data.arena&&sv.data.arena.arenaChamp?' <span style="font-size:12px">🏆竞技之王</span>':''}${sv.data.arena&&sv.data.arena.titanTitle?' <span style="font-size:12px">👑巨物猎人</span>':''}</div>
+        <div style="font-size:11px;color:#8b6914;margin:2px 0">⏱ ${timeStr}　💰 ${sv.data.gold}　⚔ 英雄×${sv.data.heroes.length}　📋 ${sv.data.cleared}/100关${sv.data.arena?'　🏅排名'+sv.data.arena.rank:''}</div>
+        <div style="display:flex;gap:8px;margin-top:6px;justify-content:center">
+          <button onclick="startSlot(${i},false)" style="flex:1;padding:6px;background:linear-gradient(180deg,#8b6914,#5a3a0a);color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer;font-weight:bold;font-size:13px">继续游戏</button>
+          <button onclick="exportSlot(${i})" style="padding:6px 10px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:1px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:11px">导出</button>
+          <button onclick="confirmDelete(${i})" style="padding:6px 10px;background:linear-gradient(180deg,#4a1a1a,#2a0a0a);color:#c0392b;border:1px solid #c0392b;border-radius:6px;cursor:pointer;font-size:11px">删除</button>
         </div></div>`;
     }else{
-      html+=`<div style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);border:2px dashed #555;border-radius:12px;padding:16px;margin-bottom:12px;text-align:center">
-        <div style="color:#555;font-size:14px;margin-bottom:10px">—— 空 ——</div>
-        <button onclick="askNewName(${i})" style="padding:8px 24px;background:linear-gradient(180deg,#8b6914,#5a3a0a);color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer;font-weight:bold">新游戏</button>
+      html+=`<div style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);border:2px dashed #555;border-radius:12px;padding:10px;margin-bottom:8px;text-align:center">
+        <div style="color:#555;font-size:13px;margin-bottom:6px">—— 空 ——</div>
+        <button onclick="askNewName(${i})" style="padding:6px 20px;background:linear-gradient(180deg,#8b6914,#5a3a0a);color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer;font-weight:bold;font-size:13px">新游戏</button>
       </div>`;
     }
   }
