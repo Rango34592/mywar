@@ -1329,6 +1329,63 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
   </div>
 </div>
 
+<!-- 局域网联机对战 -->
+<div id="screen-onlinepvp" class="screen" style="padding:15px;align-items:center;overflow-y:auto">
+  <div class="med-title" style="color:#3498db;text-shadow:0 0 15px rgba(52,152,219,.5),0 2px 4px rgba(0,0,0,.6)">🌐 局域网对战</div>
+  <div style="font-size:12px;color:var(--text2);margin-bottom:16px">同一WiFi下 · 两人实时对战 · 需房主开服务器</div>
+  
+  <div id="olLobby" style="text-align:center;width:100%;max-width:400px">
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
+      <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 创建房间</button>
+      <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:12px 28px;font-size:15px" onclick="olShowJoin()">🔗 加入房间</button>
+    </div>
+    <div id="olJoinBox" style="display:none;margin-top:12px">
+      <div style="margin-bottom:8px;font-size:13px;color:var(--text2)">输入房主IP地址：</div>
+      <input id="olJoinIp" type="text" placeholder="例如 192.168.1.100" style="width:200px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
+      <div style="margin:8px 0;font-size:13px;color:var(--text2)">房间号：</div>
+      <input id="olJoinCode" type="text" placeholder="房间号" style="width:100px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
+      <br>
+      <button class="med-btn" style="margin-top:10px;background:linear-gradient(180deg,#e67e22,#d35400);padding:8px 24px" onclick="olJoinRoom()">加入</button>
+    </div>
+    <div style="margin-top:20px;font-size:10px;color:#666;line-height:1.6;text-align:center">
+      使用前需在电脑上运行服务器脚本<br>
+      房主运行 .temp/ws_server.py + http.server<br>
+      两人连接同一WiFi即可
+    </div>
+  </div>
+  
+  <div id="olRoom" style="display:none;text-align:center;width:100%;max-width:400px">
+    <div style="background:linear-gradient(135deg,#1a2a4a,#0a1a2a);border:2px solid #3498db;border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--text2)">房间号</div>
+      <div id="olRoomCode" style="font-size:32px;color:#3498db;font-weight:bold;letter-spacing:4px;margin:8px 0">----</div>
+      <div id="olRoomStatus" style="font-size:12px;color:#2ecc71">等待对手加入...</div>
+    </div>
+    <div id="olMyIp" style="font-size:11px;color:var(--text2);margin-bottom:12px"></div>
+    <button class="med-btn" style="background:linear-gradient(180deg,#c0392b,#96281b);padding:8px 20px" onclick="olLeaveRoom()">离开房间</button>
+  </div>
+  
+  <div id="olSetup" style="display:none;width:100%;max-width:500px">
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:18px;color:#3498db;font-weight:bold">布阵阶段</div>
+      <div id="olSetupStatus" style="font-size:12px;color:var(--text2)">选择英雄上阵并分配装备</div>
+      <div id="olOpponentConfirmed" style="font-size:12px;color:#e67e22;margin-top:4px"></div>
+    </div>
+    <div id="olSetupHeroList" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px"></div>
+    <div id="olSetupFormGrid" style="margin-bottom:12px"></div>
+    <div id="olSetupEqInfo" style="font-size:11px;color:var(--text2);margin-bottom:8px;text-align:center"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="med-btn" style="background:linear-gradient(180deg,#2ecc71,#27ae60);padding:8px 20px" onclick="olConfirmSetup()">确认布阵</button>
+      <button class="med-btn" style="background:linear-gradient(180deg,#8b6914,#5a3a0a);padding:8px 20px" onclick="olResetSetup()">重置</button>
+    </div>
+  </div>
+  
+  <div id="olBattle" style="display:none;text-align:center;width:100%">
+    <div style="font-size:18px;color:#e74c3c;font-weight:bold">战斗中</div>
+    <div id="olBattleLog" style="max-height:400px;overflow-y:auto;background:#0a0a1a;border:1px solid #333;border-radius:8px;padding:12px;margin:12px 0;font-size:12px;text-align:left;line-height:1.8"></div>
+    <div id="olBattleResult" style="display:none;font-size:20px;font-weight:bold;margin:12px 0"></div>
+  </div>
+</div>
+
 <!-- 三巨头 -->
 <div id="screen-titans" class="screen">
   <div class="med-title" style="color:#e74c3c;text-shadow:0 0 20px rgba(231,76,60,.5),0 2px 4px rgba(0,0,0,.6)">三 巨 头</div>
@@ -2320,14 +2377,14 @@ function toast(msg){
 // Navigation grouping: sub-screen → parent nav item
 const NAV_PARENT={profile:'profile',achievements:'profile',adventure:'adventure',challenge:'adventure',realm:'adventure',endless:'adventure',
   heroes:'heroes',equips:'heroes',codex:'heroes',formation:'heroes',
-  arena:'arena',pvp:'arena',titans:'arena',worldboss:'arena',
+  arena:'arena',pvp:'arena',titans:'arena',worldboss:'arena',onlinepvp:'arena',
   shop:'shop',recruit:'shop',forge:'shop',battle:'battle'};
 // Sub-tab definitions: parent → [{id, label}]
 const NAV_TABS={
   profile:[{id:'profile',label:'👤 角色'},{id:'achievements',label:'🏆 成就'}],
   adventure:[{id:'adventure',label:'🗺 冒险'},{id:'challenge',label:'💀 挑战'},{id:'realm',label:'🔮 秘境'},{id:'endless',label:'🌀 无尽'}],
   heroes:[{id:'heroes',label:'⚔ 英雄'},{id:'equips',label:'🔧 装备'},{id:'codex',label:'📖 图鉴'}],
-  arena:[{id:'arena',label:'🏟 竞技场'},{id:'titans',label:'👑 三巨头'},{id:'worldboss',label:'🐉 世界Boss'},{id:'pvp',label:'⚔ 决斗'}],
+  arena:[{id:'arena',label:'🏟 竞技场'},{id:'titans',label:'👑 三巨头'},{id:'worldboss',label:'🐉 世界Boss'},{id:'pvp',label:'⚔ 决斗'},{id:'onlinepvp',label:'🌐 联机'}],
   shop:[{id:'shop',label:'🏪 商店'},{id:'recruit',label:'🎰 招募'},{id:'forge',label:'🔨 合成'}]
 };
 function renderSubTabs(current){
@@ -2358,7 +2415,7 @@ function showScreen(s){
   if(s==='arena')rArena();if(s==='codex')rCodex();
   if(s==='shop')rShop();if(s==='realm')rRealm();if(s==='endless')rEndless();
   if(s==='challenge')rChallenge();
-  if(s==='pvp')rPvp();if(s==='titans')rTitans();if(s==='worldboss')rWorldBoss();
+  if(s==='pvp')rPvp();if(s==='onlinepvp')rOnlinePvp();if(s==='titans')rTitans();if(s==='worldboss')rWorldBoss();
   // BGM switching
   if(s==='battle'){
     if(B&&B.isRealm)playBGM('realm');
@@ -6891,6 +6948,18 @@ function endBattle(vic){
     endRealmBattle(vic);
   }else if(B.isChallenge){
     endChallengeBattle(vic);
+  }else if(B.isOnlinePvp){
+    // 联机对战结算
+    const winner=olRole==='host'?(vic?'host':'client'):(vic?'client':'host');
+    // 房主发送战斗结束给对手
+    if(olWs&&olWs.readyState===1){
+      olWs.send(JSON.stringify({type:'battle_end',winner}));
+    }
+    // 清理发送定时器
+    if(B._olSendInterval)clearInterval(B._olSendInterval);
+    const myWin=(winner===olRole);
+    sfx(myWin?'victory':'defeat');
+    rew.innerHTML=`<div class="ri" style="font-size:18px;color:${myWin?'#2ecc71':'#e74c3c'}">${myWin?'🎉 胜利！':'💔 败北...'}</div><div style="font-size:12px;color:var(--text2)">局域网对战，无奖励</div>`;
   }else if(B.isPvp){
     endPvpBattle(vic);
   }else if(vic){
@@ -7445,6 +7514,7 @@ function closeRes(){
   const wasRealm=B&&B.isRealm;
   const wasChallenge=B&&B.isChallenge;
   const wasPvp=B&&B.isPvp;
+  const wasOnlinePvp=B&&B.isOnlinePvp;
   const wasTitan=B&&B.isTitan;
   const wasWorldBoss=B&&B.isWorldBoss;
   const wasEndless=B&&B.isEndless;
@@ -7452,7 +7522,7 @@ function closeRes(){
   if(_battleGoldEarned===0&&B)_battleGoldEarned=Math.max(0,G.gold-(_goldBefore||0));
   stopBGM();checkAchievements();
   B=null;realmState=null;
-  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasEndless?'endless':wasChallenge?'challenge':wasPvp?'pvp':'adventure');
+  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasEndless?'endless':wasChallenge?'challenge':wasOnlinePvp?'onlinepvp':wasPvp?'pvp':'adventure');
 }
 function retreat(){
   if(!confirm('确认撤退？'))return;
@@ -7479,10 +7549,11 @@ function retreat(){
   const wasArena=B&&B.isArena;
   const wasRealm=B&&B.isRealm;
   const wasPvp=B&&B.isPvp;
+  const wasOnlinePvp=B&&B.isOnlinePvp;
   const wasTitan=B&&B.isTitan;
   const wasWorldBoss=B&&B.isWorldBoss;
   B=null;
-  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasEndless?'endless':wasPvp?'pvp':'adventure');
+  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasEndless?'endless':wasOnlinePvp?'onlinepvp':wasPvp?'pvp':'adventure');
 }
 
 // ============= WORLD BOSS =============
@@ -9527,10 +9598,448 @@ function endPvpBattle(vic){
   document.getElementById('resRew').innerHTML=`<div class="ri" style="font-size:18px;color:var(--gold)">骑士 ${player===1?'I':'II'} 获胜！</div><div style="font-size:12px;color:var(--text2)">竞技决斗，无奖励</div>`;
 }
 
+// ============= ONLINE PVP (LAN) =============
+let olWs=null; // WebSocket连接
+let olRole=null; // 'host' | 'client'
+let olRoomCode=null;
+let olMyData=null; // {heroes,equips,form,eqAssign}
+let olOpponentData=null;
+let olMyConfirmed=false;
+let olOpponentConfirmed=false;
+let olSelectedHeroUid=null;
+
+function rOnlinePvp(){
+  // 重置显示
+  document.getElementById('olLobby').style.display='';
+  document.getElementById('olRoom').style.display='none';
+  document.getElementById('olSetup').style.display='none';
+  document.getElementById('olBattle').style.display='none';
+  document.getElementById('olJoinBox').style.display='none';
+  // 显示本机IP提示
+  document.getElementById('olMyIp').textContent='';
+}
+
+function olShowJoin(){
+  const box=document.getElementById('olJoinBox');
+  box.style.display=box.style.display==='none'?'':'none';
+}
+
+function olCreateRoom(){
+  const code=String(ri(1000,9999));
+  // 自动检测当前页面的hostname作为WS地址
+  const wsUrl='ws://'+location.hostname+':8766';
+  olConnect(wsUrl,code,'host');
+}
+
+function olJoinRoom(){
+  const ip=document.getElementById('olJoinIp').value.trim();
+  const code=document.getElementById('olJoinCode').value.trim();
+  if(!ip){toast('请输入房主IP');return}
+  if(!code){toast('请输入房间号');return}
+  const wsUrl='ws://'+ip+':8766';
+  olConnect(wsUrl,code,'client');
+}
+
+function olConnect(wsUrl,code,role){
+  toast('连接中...');
+  const ws=new WebSocket(wsUrl);
+  olWs=ws;
+  olRole=role;
+  olRoomCode=code;
+  olMyConfirmed=false;
+  olOpponentConfirmed=false;
+  
+  ws.onopen=()=>{
+    if(role==='host'){
+      ws.send(JSON.stringify({type:'create',code}));
+    }else{
+      ws.send(JSON.stringify({type:'join',code}));
+    }
+  };
+  
+  ws.onmessage=(e)=>{
+    try{
+      const msg=JSON.parse(e.data);
+      olHandleMsg(msg);
+    }catch(err){console.error('OL msg error',err)}
+  };
+  
+  ws.onclose=()=>{
+    toast('连接已断开');
+    olWs=null;
+    // 断线后回大厅
+    olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
+    olMyConfirmed=false;olOpponentConfirmed=false;
+    rOnlinePvp();
+  };
+  
+  ws.onerror=()=>{
+    toast('连接失败，请检查IP和服务器是否开启');
+    olWs=null;
+    olRole=null;olRoomCode=null;
+    rOnlinePvp();
+  };
+}
+
+function olHandleMsg(msg){
+  const mtype=msg.type;
+  
+  if(mtype==='created'){
+    document.getElementById('olLobby').style.display='none';
+    document.getElementById('olRoom').style.display='';
+    document.getElementById('olRoomCode').textContent=msg.code||olRoomCode;
+    document.getElementById('olRoomStatus').textContent='等待对手加入...';
+    const hostIp=msg.host_ip||location.hostname;
+    document.getElementById('olMyIp').innerHTML=`告诉对手你的IP和房间号：<br><b style="color:#3498db;font-size:14px">${hostIp}</b> · 房间号 <b style="color:#3498db;font-size:14px">${msg.code||olRoomCode}</b>`;
+    toast('房间已创建');
+  }
+  
+  else if(mtype==='joined'){
+    toast('成功加入房间！');
+    // 生成我的队伍数据
+    olGenerateMyData();
+    // 通知对方我的数据
+    olWs.send(JSON.stringify({type:'setup',data:olMyData,confirmed:false}));
+    // 切换到布阵界面
+    olShowSetup();
+  }
+  
+  else if(mtype==='opponent_joined'){
+    toast('对手已加入！');
+    document.getElementById('olRoomStatus').textContent='对手已加入！准备布阵...';
+    document.getElementById('olRoomStatus').style.color='#2ecc71';
+    // 生成我的队伍数据
+    olGenerateMyData();
+    // 发送我的数据给对方
+    olWs.send(JSON.stringify({type:'setup',data:olMyData,confirmed:false}));
+    // 稍等后进入布阵
+    setTimeout(()=>olShowSetup(),500);
+  }
+  
+  else if(mtype==='setup'){
+    // 收到对方的布阵数据
+    if(msg.from!==olRole){
+      olOpponentData=msg.data;
+      olOpponentConfirmed=msg.confirmed||false;
+      if(olOpponentConfirmed){
+        document.getElementById('olOpponentConfirmed').textContent='⚠ 对手已确认布阵';
+        document.getElementById('olOpponentConfirmed').style.color='#e67e22';
+      }else{
+        document.getElementById('olOpponentConfirmed').textContent='';
+      }
+    }
+  }
+  
+  else if(mtype==='battle_start'){
+    // 收到对方完整布阵数据，开战！
+    olOpponentData=msg.opponent_data;
+    olStartBattle();
+  }
+  
+  else if(mtype==='battle_log'){
+    // 客户端收到房主的战斗日志
+    if(olRole==='client'){
+      const logDiv=document.getElementById('olBattleLog');
+      const entries=msg.log.split('<br>');
+      entries.forEach(entry=>{
+        if(!entry)return;
+        const span=document.createElement('div');
+        span.style.cssText='padding:2px 0;border-bottom:1px solid #1a1a2e';
+        // 格式化关键字高亮
+        let html=entry;
+        html=html.replace(/(回合 \d+)/g,'<b style="color:#f39c12">$1</b>');
+        html=html.replace(/(暴击| crit)/gi,'<span style="color:#e74c3c;font-weight:bold">$1</span>');
+        html=html.replace(/(格挡|闪避)/g,'<span style="color:#3498db">$1</span>');
+        html=html.replace(/(治疗|回复)/g,'<span style="color:#2ecc71">$1</span>');
+        html=html.replace(/(流血|中毒|灼烧)/g,'<span style="color:#9b59b6">$1</span>');
+        html=html.replace(/(击败|阵亡|死亡)/g,'<span style="color:#e74c3c">$1</span>');
+        html=html.replace(/(🌐 局域网对战)/g,'<b style="color:#3498db">$1</b>');
+        span.innerHTML=html;
+        logDiv.appendChild(span);
+      });
+      logDiv.scrollTop=logDiv.scrollHeight;
+    }
+  }
+  
+  else if(mtype==='battle_end'){
+    document.getElementById('olBattleResult').style.display='';
+    const myWin=msg.winner===olRole;
+    document.getElementById('olBattleResult').innerHTML=`<div style="font-size:24px;font-weight:bold;margin:8px 0">${myWin?'🎉 你赢了！':'💔 你输了...'}</div>
+      <button class="med-btn" style="background:linear-gradient(180deg,#3498db,#2980b9);padding:8px 20px;margin-top:8px" onclick="olLeaveRoom()">返回大厅</button>`;
+    document.getElementById('olBattleResult').style.color=myWin?'#2ecc71':'#e74c3c';
+  }
+  
+  else if(mtype==='opponent_disconnected'){
+    toast('对手已断开连接');
+    // 对手断线，回到大厅
+    olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
+    olMyConfirmed=false;olOpponentConfirmed=false;
+    if(olWs){olWs.close();olWs=null}
+    rOnlinePvp();
+  }
+  
+  else if(mtype==='error'){
+    toast(msg.text||'出错了');
+  }
+}
+
+function olGenerateMyData(){
+  const keys=Object.keys(H),eqKeys=Object.keys(EQ);
+  const heroes=[],equips=[];
+  const used=new Set();
+  for(let i=0;i<5;i++){
+    let hid;do{hid=keys[ri(0,keys.length-1)]}while(used.has(hid)&&used.size<keys.length);
+    used.add(hid);
+    heroes.push({id:hid,star:6,uid:'ol_h'+i,eq:[null,null],relicUid:null,rank:0});
+  }
+  for(let i=0;i<10;i++){
+    equips.push({id:eqKeys[ri(0,eqKeys.length-1)],star:ri(4,6),uid:'ol_e'+i});
+  }
+  olMyData={heroes,equips,form:[null,null,null,null,null],eqAssign:{}};
+}
+
+function olShowSetup(){
+  document.getElementById('olRoom').style.display='none';
+  document.getElementById('olLobby').style.display='none';
+  document.getElementById('olSetup').style.display='';
+  document.getElementById('olOpponentConfirmed').textContent='';
+  olSelectedHeroUid=null;
+  olRenderSetup();
+}
+
+function olRenderSetup(){
+  if(!olMyData)return;
+  const pd=olMyData;
+  const usedEqUids=new Set();
+  Object.values(pd.eqAssign).forEach(arr=>arr.forEach(u=>usedEqUids.add(u)));
+  
+  // 英雄列表
+  const hl=document.getElementById('olSetupHeroList');
+  hl.innerHTML=pd.heroes.map(h=>{
+    const d=H[h.id];
+    const placed=pd.form.indexOf(h.uid);
+    const sel=olSelectedHeroUid===h.uid;
+    let cls='pvp-r-hero';if(sel)cls+=' sel';if(placed>=0)cls+=' placed';
+    const eqIds=pd.eqAssign[h.uid]||[];
+    return `<div class="${cls}" onclick="olSelectHero('${h.uid}')" style="min-width:60px">
+      ${placed>=0?`<span class="rh-badge">${placed<3?'后':'前'}${placed%3+1}</span>`:''}
+      <img src="${imgUrl(d.img)}" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:4px">
+      <div style="font-size:10px;color:#ffd700">${'★'.repeat(h.star)}</div>
+      <div style="font-size:10px">${d.name}</div>
+      ${eqIds.length?`<div style="font-size:9px;color:#3498db">装×${eqIds.length}</div>`:''}
+    </div>`;
+  }).join('');
+  
+  // 阵型
+  const rows=[{label:'后排',slots:[0,1,2]},{label:'前排',slots:[3,4]}];
+  const fg=document.getElementById('olSetupFormGrid');
+  fg.innerHTML=rows.map(r=>`<div style="display:flex;gap:6px;justify-content:center;align-items:center;margin:4px 0">
+    <span style="font-size:11px;color:var(--text2);width:30px">${r.label}</span>
+    ${r.slots.map(i=>{
+      const uid=pd.form[i];
+      if(uid===null)return `<div style="width:60px;height:60px;border:2px dashed #555;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555;cursor:pointer" onclick="olPlaceHero(${i})">+</div>`;
+      const h=pd.heroes.find(x=>x.uid===uid),d=H[h.id];
+      return `<div style="width:60px;height:60px;border:2px solid #ffd700;border-radius:6px;text-align:center;cursor:pointer;background:#1a0a00" onclick="olPlaceHero(${i})">
+        <img src="${imgUrl(d.img)}" onerror="this.style.display='none'" style="width:32px;height:32px;border-radius:4px;margin-top:2px">
+        <div style="font-size:9px;color:#ffd700">${d.name}</div></div>`;
+    }).join('')}</div>`).join('');
+  
+  // 装备信息
+  const eqInfo=document.getElementById('olSetupEqInfo');
+  if(olSelectedHeroUid){
+    const h=pd.heroes.find(x=>x.uid===olSelectedHeroUid);
+    const d=H[h.id];
+    const eqIds=pd.eqAssign[olSelectedHeroUid]||[];
+    eqInfo.textContent=`${d.name} — 装备: ${eqIds.length}/2 (点击阵型空位放置，再点已放英雄分配装备)`;
+  }else{
+    eqInfo.textContent='选择英雄后点击阵型空位放置';
+  }
+}
+
+function olSelectHero(uid){
+  olSelectedHeroUid=olSelectedHeroUid===uid?null:uid;
+  olRenderSetup();
+}
+
+function olPlaceHero(slotIdx){
+  if(!olMyData)return;
+  const pd=olMyData;
+  // 如果点已有英雄的位置 → 分配装备
+  if(pd.form[slotIdx]!==null&&olSelectedHeroUid===null){
+    olToggleEquipForSlot(slotIdx);
+    return;
+  }
+  if(olSelectedHeroUid===null)return;
+  const existingSlot=pd.form.indexOf(olSelectedHeroUid);
+  if(existingSlot>=0)pd.form[existingSlot]=null;
+  const targetUid=pd.form[slotIdx];
+  if(targetUid!==null&&existingSlot>=0)pd.form[existingSlot]=targetUid;
+  pd.form[slotIdx]=olSelectedHeroUid;
+  olSelectedHeroUid=null;
+  olRenderSetup();
+  // 同步给对方
+  olSyncSetup();
+}
+
+function olToggleEquipForSlot(slotIdx){
+  if(!olMyData)return;
+  const pd=olMyData;
+  const heroUid=pd.form[slotIdx];
+  if(!heroUid)return;
+  // 简单循环分配：找下一个未使用的装备分配给此英雄
+  if(!pd.eqAssign[heroUid])pd.eqAssign[heroUid]=[];
+  const arr=pd.eqAssign[heroUid];
+  const usedEqUids=new Set();
+  Object.entries(pd.eqAssign).forEach(([k,v])=>{if(k!==heroUid)v.forEach(u=>usedEqUids.add(u))});
+  if(arr.length<2){
+    // 找一个未使用的装备
+    for(const eq of pd.equips){
+      if(!usedEqUids.has(eq.uid)&&!arr.includes(eq.uid)){
+        arr.push(eq.uid);
+        break;
+      }
+    }
+  }else{
+    // 已满2个，移除最后一个
+    arr.pop();
+  }
+  olRenderSetup();
+  olSyncSetup();
+}
+
+function olSyncSetup(){
+  if(!olWs||olWs.readyState!==1)return;
+  olWs.send(JSON.stringify({type:'setup',data:olMyData,confirmed:olMyConfirmed}));
+}
+
+function olConfirmSetup(){
+  if(!olMyData)return;
+  const placed=olMyData.form.filter(u=>u!==null);
+  if(!placed.length){toast('至少放置1名英雄！');return}
+  olMyConfirmed=true;
+  document.getElementById('olSetupStatus').textContent='✅ 已确认，等待对手...';
+  document.getElementById('olSetupStatus').style.color='#2ecc71';
+  olSyncSetup();
+  // 通知服务器检查双方是否都确认
+  if(olWs&&olWs.readyState===1){
+    olWs.send(JSON.stringify({type:'start_check'}));
+  }
+}
+
+function olResetSetup(){
+  if(!olMyData)return;
+  olMyData.form=[null,null,null,null,null];
+  olMyData.eqAssign={};
+  olMyConfirmed=false;
+  olSelectedHeroUid=null;
+  document.getElementById('olSetupStatus').textContent='选择英雄上阵并分配装备';
+  document.getElementById('olSetupStatus').style.color='var(--text2)';
+  olRenderSetup();
+  olSyncSetup();
+}
+
+function olStartBattle(){
+  document.getElementById('olSetup').style.display='none';
+  document.getElementById('olBattle').style.display='';
+  document.getElementById('olBattleLog').innerHTML='';
+  document.getElementById('olBattleResult').style.display='none';
+  
+  if(olRole==='host'){
+    // 房主运行战斗逻辑
+    olRunHostBattle();
+  }else{
+    // 客户端等待日志
+    document.getElementById('olBattleLog').innerHTML='<div style="color:var(--text2)">等待房主战斗数据...</div>';
+  }
+}
+
+function olRunHostBattle(){
+  if(!olMyData||!olOpponentData)return;
+  // 构建双方战斗单位
+  const pMap=[{row:'back',idx:0},{row:'back',idx:1},{row:'back',idx:2},{row:'front',idx:0},{row:'front',idx:1}];
+  
+  function buildUnits(pd,isE){
+    const units=[];
+    pd.form.forEach((uid,i)=>{
+      if(uid===null)return;
+      const h=pd.heroes.find(x=>x.uid===uid);if(!h)return;
+      const eqUids=pd.eqAssign[uid]||[];h.eq=[eqUids[0]||null,eqUids[1]||null];
+      const s=pvpStats(h,pd);
+      units.push({...s,hp:s.hp,maxHp:s.maxHp,isE,pos:pMap[i],cdLeft:0,skOn:false,
+        taunt:false,tauntPerm:false,defBuff:0,atkBuff:0,atkBuffTurns:0,defBuffTurns:0,defBuff2:0,
+        stun:0,bleed:0,bleedDmg:0,poisons:[],bleeds:[],revived:false,kangwaUsed:false,
+        poison:0,poisonDmg:0,shield:0,invincible:0,silenced:0,
+        healReduce:0,healReduceAmt:0,dmgReduce:0,dmgReduceAmt:0,
+        spdReduce:0,spdReduceAmt:0,marked:0,markedBy:null,
+        armorBreak:false,extraAction:false,charmed:0,
+        debuffImmune:s.id==='swordsman'||s.id==='xu'||s.id==='ziranwupo',
+        relic:s.relic||false,_relicId:s._relicId});
+    });return units;
+  }
+  
+  const allies=buildUnits(olMyData,false);
+  const enemies=buildUnits(olOpponentData,true);
+  if(!allies.length||!enemies.length){toast('阵容无效！');return}
+  
+  // 初始化被动
+  allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
+  enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='zhangxuyang')e.hp=Math.round(e.maxHp/5);if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
+  
+  G.auto=true;
+  B={allies,enemies,round:1,order:[],lv:-1,isPvp:true,log:[],done:false,
+    shieldFirst:true,busy:false,paused:false,stats:{},isOnlinePvp:true};
+  B.allies.forEach(a=>{if(a.id==='denglikai')B.allies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
+  B.enemies.forEach(e=>{if(e.id==='denglikai')B.enemies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
+  
+  // 监听战斗日志发送给客户端
+  const origLog=B.log;
+  B._olLogBuffer=[];
+  B.log=new Proxy([],{
+    get(target,prop){
+      if(prop==='push')return function(...args){
+        target.push(...args);
+        B._olLogBuffer.push(...args);
+        return target.length;
+      };
+      return target[prop];
+    }
+  });
+  
+  syncBattleUI();showScreen('battle');buildOrder();renderB();
+  B.log.push(`<b style="color:#3498db">🌐 局域网对战</b>`);
+  B.log.push(`<b style="color:var(--gold)">── 回合 1 ──</b>`);
+  renderB();
+  
+  // 定时发送日志给客户端
+  B._olSendInterval=setInterval(()=>{
+    if(!B||B.done){clearInterval(B._olSendInterval);return}
+    if(B._olLogBuffer.length>0&&olWs&&olWs.readyState===1){
+      olWs.send(JSON.stringify({type:'battle_log',log:B._olLogBuffer.join('<br>'),round:B.round}));
+      B._olLogBuffer=[];
+    }
+  },500);
+  
+  runBattle();
+}
+
+function olLeaveRoom(){
+  if(olWs){olWs.close();olWs=null}
+  olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
+  olMyConfirmed=false;olOpponentConfirmed=false;
+  rOnlinePvp();
+}
+
+// 心跳保活
+setInterval(()=>{
+  if(olWs&&olWs.readyState===1){
+    olWs.send(JSON.stringify({type:'ping'}));
+  }
+},30000);
+
 function rPvp(){}
 
 // ============= SAVE SYSTEM =============
-const MAX_SLOTS=3;
+const MAX_SLOTS=6;
 const SAVE_KEY='mywar_saves';
 
 function getSaves(){try{return JSON.parse(localStorage.getItem(SAVE_KEY))||{}}catch(e){return{}}}
@@ -9596,8 +10105,28 @@ function exportSave(){
   document.body.appendChild(btn);
 }
 function importSave(){
+  // 先让用户选目标槽位
+  const saves=getSaves();
+  let slotHtml='选择导入到哪个槽位：<div style="display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap">';
+  for(let i=1;i<=MAX_SLOTS;i++){
+    const occupied=!!saves[i];
+    slotHtml+=`<button onclick="doImportSlot(${i})" style="padding:8px 16px;background:linear-gradient(180deg,${occupied?'#4a1a1a':'#3a9e5c'},${occupied?'#2a0a0a':'#2a7e3c'});color:#fff;border:1px solid ${occupied?'#c0392b':'#3a9e5c'};border-radius:6px;cursor:pointer;font-size:13px">槽位${i}${occupied?'(已有)':''}</button>`;
+  }
+  slotHtml+=`<button onclick="this.closest('.import-overlay').remove()" style="padding:8px 16px;background:#555;color:#fff;border:1px solid #888;border-radius:6px;cursor:pointer">取消</button></div>`;
+  const overlay=document.createElement('div');
+  overlay.className='import-overlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center';
+  const box=document.createElement('div');
+  box.style.cssText='background:#1a152e;color:#d4a846;padding:24px;border-radius:12px;border:2px solid #d4a846;text-align:center;max-width:90%';
+  box.innerHTML=slotHtml;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+function doImportSlot(slot){
+  // 移除选择界面
+  document.querySelectorAll('.import-overlay').forEach(e=>e.remove());
   const ta=document.createElement('textarea');
-  ta.placeholder='在此粘贴你的存档代码...';
+  ta.placeholder='在此粘贴存档代码...';
   ta.style.cssText='position:fixed;top:40%;left:50%;width:90%;max-width:500px;height:120px;transform:translate(-50%,-50%);z-index:99999;background:#1a152e;color:#e8dcc8;border:2px solid #d4a846;border-radius:8px;padding:12px;font-size:11px';
   document.body.appendChild(ta);
   ta.focus();
@@ -9605,13 +10134,21 @@ function importSave(){
   btnRow.style.cssText='position:fixed;top:60%;left:50%;transform:translateX(-50%);z-index:99999;display:flex;gap:10px';
   document.body.appendChild(btnRow);
   const ok=document.createElement('button');
-  ok.textContent='确认导入';
+  ok.textContent=`导入到槽位${slot}`;
   ok.style.cssText='padding:8px 20px;background:linear-gradient(180deg,#3a9e5c,#2a7e3c);color:#fff;border:1px solid #3a9e5c;border-radius:6px;cursor:pointer';
   ok.onclick=()=>{
     try{
       const str=ta.value.trim();
       if(!str){alert('请粘贴存档代码');return}
-      const saves=JSON.parse(decodeURIComponent(escape(atob(str))));
+      const imported=JSON.parse(decodeURIComponent(escape(atob(str))));
+      // 支持单槽导出格式和全量导出格式
+      const saves=getSaves();
+      if(imported[slot]){
+        saves[slot]=imported[slot];
+      }else{
+        // 全量格式，合并
+        Object.assign(saves,imported);
+      }
       putSaves(saves);
       alert('导入成功！');ta.remove();btnRow.remove();renderTitleScreen();
     }catch(e){alert('存档代码无效，请检查是否完整复制')}
@@ -9621,6 +10158,26 @@ function importSave(){
   cancel.style.cssText='padding:8px 20px;background:linear-gradient(180deg,#4a1a1a,#2a0a0a);color:#c0392b;border:1px solid #c0392b;border-radius:6px;cursor:pointer';
   cancel.onclick=()=>{ta.remove();btnRow.remove()};
   btnRow.appendChild(ok);btnRow.appendChild(cancel);
+}
+
+function exportSlot(slot){
+  const saves=getSaves();
+  if(!saves[slot]){toast('该槽位无存档');return}
+  const str=btoa(unescape(encodeURIComponent(JSON.stringify({[slot]:saves[slot]}))));
+  const ta=document.createElement('textarea');
+  ta.value=str;
+  ta.style.cssText='position:fixed;top:50%;left:50%;width:90%;max-width:500px;height:200px;transform:translate(-50%,-50%);z-index:99999;background:#1a152e;color:#e8dcc8;border:2px solid #d4a846;border-radius:8px;padding:12px;font-size:11px';
+  document.body.appendChild(ta);
+  ta.select();
+  const tip=document.createElement('div');
+  tip.textContent=`存档${slot}导出成功，长按文字→全选→复制保存`;
+  tip.style.cssText='position:fixed;top:20%;left:50%;transform:translateX(-50%);z-index:99999;background:#1a152e;color:#d4a846;padding:10px 20px;border-radius:8px;border:1px solid #d4a846;font-size:13px;max-width:90%;text-align:center';
+  document.body.appendChild(tip);
+  const btn=document.createElement('button');
+  btn.textContent='关闭';
+  btn.style.cssText='position:fixed;top:75%;left:50%;transform:translateX(-50%);z-index:99999;padding:8px 24px;background:#8b6914;color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer';
+  btn.onclick=()=>{ta.remove();tip.remove();btn.remove()};
+  document.body.appendChild(btn);
 }
 
 function renderTitleScreen(){
@@ -9637,6 +10194,7 @@ function renderTitleScreen(){
         <div style="font-size:11px;color:#8b6914;margin:4px 0">⏱ ${timeStr}　💰 ${sv.data.gold}　⚔ 英雄×${sv.data.heroes.length}　📋 ${sv.data.cleared}/100关${sv.data.arena?'　🏅排名'+sv.data.arena.rank:''}</div>
         <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
           <button onclick="startSlot(${i},false)" style="flex:1;padding:8px;background:linear-gradient(180deg,#8b6914,#5a3a0a);color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer;font-weight:bold">继续游戏</button>
+          <button onclick="exportSlot(${i})" style="padding:8px 12px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:1px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:12px">导出</button>
           <button onclick="confirmDelete(${i})" style="padding:8px 12px;background:linear-gradient(180deg,#4a1a1a,#2a0a0a);color:#c0392b;border:1px solid #c0392b;border-radius:6px;cursor:pointer;font-size:12px">删除</button>
         </div></div>`;
     }else{
