@@ -9855,15 +9855,21 @@ function olGetPort(){
 // 初始化信令服务器地址输入框
 function olInitSignaling(){
   const isFile=location.protocol==='file:';
+  const isHttps=location.protocol==='https:';
   const hintEl=document.getElementById('olSignalingHint');
   const hostInput=document.getElementById('olSignalingHost');
   const portInput=document.getElementById('olSignalingPort');
   if(!hostInput||!portInput)return;
-  if(isFile){
+  if(isHttps){
+    // HTTPS页面（如GitHub Pages）无法连接本地ws://服务器，必须用http://IP访问
+    hostInput.value='';
+    hostInput.placeholder='192.168.x.x';
+    if(hintEl)hintEl.innerHTML='<span style="color:#e74c3c">⚠ HTTPS页面无法联机！请改用 http://电脑WiFiIP:8765/game.html 访问（如 http://192.168.1.101:8765/game.html）</span>';
+  }else if(isFile){
     // APK环境：提示用户填电脑IP
     hostInput.value='';
     hostInput.placeholder='192.168.x.x';
-    if(hintEl)hintEl.innerHTML='手机用户：填<strong>电脑的WiFi IP</strong>（电脑浏览器打开 game.html 页面地址栏的IP就是），电脑需先运行启动脚本';
+    if(hintEl)hintEl.innerHTML='手机用户：填<strong>电脑的WiFi IP</strong>（电脑浏览器地址栏里的IP就是），电脑需先运行启动脚本';
   }else if(location.hostname&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
     // 通过局域网IP访问（iPad等）
     hostInput.value=location.hostname;
@@ -9907,6 +9913,7 @@ function olCleanup(){
 }
 
 function olCreateRoom(){
+  if(location.protocol==='https:'){toast('HTTPS页面无法联机，请用 http://电脑IP:8765/game.html 访问');return}
   const code=String(ri(1000,9999));
   olRoomCode=code;
   olRole='host';
@@ -9982,6 +9989,7 @@ function olCreateRoom(){
 function olJoinRoom(){
   const code=document.getElementById('olJoinCode').value.trim();
   if(!code){toast('请输入房间号');return}
+  if(location.protocol==='https:'){toast('HTTPS页面无法联机，请用 http://电脑IP:8765/game.html 访问');return}
   olRoomCode=code;
   olRole='client';
   olMyConfirmed=false;
