@@ -4480,6 +4480,16 @@ async function runBattle(){
       });
       B.allies.forEach(a=>{if(!a.tauntPerm){a.taunt=false;a._tauntTurn=0}});
       B.enemies.forEach(e=>{if(!e.tauntPerm){e.taunt=false;e._tauntTurn=0}if(e.cdLeft>0)e.cdLeft--;e._dmgDealtThisTurn=0});
+      // 无尽词条：每回合回复
+      if(B.isEndless){
+        B.allies.forEach(a=>{
+          if(a.hp>0&&a._endlessRegen){
+            const heal=Math.round(a.maxHp*a._endlessRegen/100);
+            const healed=applyHeal(a,heal);
+            if(healed>0){showDmg(a.uid,healed,'heal');B.log.push(`<span style="color:#2ecc71">🌀 ${a.name} 词条回复 +${healed}HP</span>`)}
+          }
+        });
+      }
       // 三哥被动：永续嘲讽
       B.allies.forEach(a=>{if(a.id==='sange'&&a.hp>0){a.taunt=true;a.tauntPerm=true}});
       B.enemies.forEach(e=>{if(e.id==='sange'&&e.hp>0){e.taunt=true;e.tauntPerm=true}});
@@ -5081,6 +5091,13 @@ function applyDmg(actor,target,rawDmg,_noReflect){
   }
   // 装备减伤
   if(target.eqDmgReduce>0){const orig=dmg;dmg=Math.round(dmg*(1-target.eqDmgReduce/100));if(orig!==dmg)B.log.push(`<span style="color:#3498db">🛡 ${target.name} 装备减伤${target.eqDmgReduce}%！伤害${orig}→${dmg}</span>`)}
+  // 无尽词条减伤
+  if(target._endlessDmgReduce>0&&!target.isE){const orig=dmg;dmg=Math.round(dmg*(1-target._endlessDmgReduce/100));if(orig!==dmg)B.log.push(`<span style="color:#9b59b6">🌀 ${target.name} 词条减伤${target._endlessDmgReduce}%！${orig}→${dmg}</span>`)}
+  // 无尽词条嗜血
+  if(dmg>0&&actor._endlessLifesteal>0&&!actor.isE){
+    const lsHeal=Math.round(dmg*actor._endlessLifesteal/100);
+    if(lsHeal>0){const healed=applyHeal(actor,lsHeal);if(healed>0){showDmg(actor.uid,healed,'heal');B.log.push(`<span style="color:#2ecc71">🌀 ${actor.name} 词条嗜血 +${healed}HP</span>`)}}
+  }
   if(target.shield>0){const absorbed=Math.min(target.shield,dmg);target.shield-=absorbed;dmg-=absorbed;if(dmg<=0){B.log.push(`${target.name} 护盾吸收了${absorbed}伤害`);return 0}}
    target.hp-=dmg;bDmg(actor.uid,target.uid,dmg);
    if(dmg>0)actor._dmgDealtThisTurn=(actor._dmgDealtThisTurn||0)+dmg;
@@ -8761,7 +8778,70 @@ function endRealmBattle(vic){
 }
 
 // ============= ENDLESS MODE =============
-let endlessState=null; // {wave, allies, totalDmg:{}, bestWave, totalGold}
+let endlessState=null; // {wave, allies, totalDmg:{}, bestWave, totalGold, buffs:[]}
+
+// ===== 无尽词条系统 =====
+// 品质：白0 蓝1 紫2 金3 红4
+const EL_TIER=[
+  {name:'白',color:'#aaa',mult:1},
+  {name:'蓝',color:'#3498db',mult:1.8},
+  {name:'紫',color:'#9b59b6',mult:3},
+  {name:'金',color:'#f1c40f',mult:5},
+  {name:'红',color:'#e74c3c',mult:8}
+];
+const EL_TIER_WEIGHTS=[40,30,18,9,3]; // 概率权重
+
+// 词条定义：id, name, desc(模板), effect(wave, tier) => {应用到allies的函数}
+const EL_AFFIXES=[
+  {id:'atk',name:'锋刃',desc:'攻击力+{v}%',effect:(m)=>(allies)=>{allies.forEach(a=>{const b=Math.round(a.atk*m/100);a.atk+=b;a.maxHp=a.maxHp||a.hp})}},
+  {id:'def',name:'铁壁',desc:'防御力+{v}%',effect:(m)=>(allies)=>{allies.forEach(a=>{a.def+=Math.round(a.def*m/100)})}},
+  {id:'hp',name:'生机',desc:'最大生命+{v}%',effect:(m)=>(allies)=>{allies.forEach(a=>{const b=Math.round(a.maxHp*m/100);a.maxHp+=b;a.hp+=b})}},
+  {id:'crit',name:'锐眼',desc:'暴击率+{v}%',effect:(m)=>(allies)=>{allies.forEach(a=>{a.crit+=m})}},
+  {id:'cdmg',name:'致命',desc:'暴击伤害+{v}%',effect:(m)=>(allies)=>{allies.forEach(a=>{a.cdmg+=m/100})}},
+  {id:'heal',name:'圣泉',desc:'每回合开始回复{v}%最大生命',effect:(m)=>(allies)=>{allies.forEach(a=>{a._endlessRegen=(a._endlessRegen||0)+m})}},
+  {id:'shield',name:'守护',desc:'每关开始获得{v}%最大生命护盾',effect:(m)=>(allies)=>{allies.forEach(a=>{a._endlessShield=(a._endlessShield||0)+m})}},
+  {id:'dmgReduce',name:'坚韧',desc:'受到伤害减少{v}%',effect:(m)=>(allies)=>{allies.forEach(a=>{a._endlessDmgReduce=(a._endlessDmgReduce||0)+m})}},
+  {id:'spd',name:'疾风',desc:'速度+{v}',effect:(m)=>(allies)=>{allies.forEach(a=>{a.spd+=m})}},
+  {id:'lifesteal',name:'嗜血',desc:'攻击回复{v}%伤害的生命',effect:(m)=>(allies)=>{allies.forEach(a=>{a._endlessLifesteal=(a._endlessLifesteal||0)+m})}},
+];
+
+// 每个词条各品质对应的数值
+const EL_VALUES={
+  atk:   [8, 15, 25, 40, 60],
+  def:   [8, 15, 25, 40, 60],
+  hp:    [10,20, 35, 50, 75],
+  crit:  [3, 6,  10, 16, 25],
+  cdmg:  [10,20, 35, 50, 80],
+  heal:  [2, 4,  6,  9,  13],
+  shield:[5, 10, 18, 28, 40],
+  dmgReduce:[5,8, 12, 18, 25],
+  spd:   [1, 1,  2,  2,  3],
+  lifesteal:[3,6, 10, 15, 22],
+};
+
+function rollEndlessAffixTier(){
+  const total=EL_TIER_WEIGHTS.reduce((a,b)=>a+b,0);
+  let r=Math.random()*total,t=0;
+  for(let i=0;i<EL_TIER_WEIGHTS.length;i++){t+=EL_TIER_WEIGHTS[i];if(r<t)return i}
+  return 0;
+}
+
+function generateEndlessChoices(){
+  // 随机3个不同词条+品质
+  const choices=[];
+  const usedIds=new Set();
+  for(let i=0;i<3;i++){
+    let afx;let tries=0;
+    do{afx=EL_AFFIXES[ri(0,EL_AFFIXES.length-1)];tries++}while(usedIds.has(afx.id)&&tries<20);
+    usedIds.add(afx.id);
+    const tier=rollEndlessAffixTier();
+    const val=EL_VALUES[afx.id][tier];
+    choices.push({afx,tier,val});
+  }
+  return choices;
+}
+
+let _endlessChoices=null; // 暂存当前选择
 
 function rEndless(){
   document.getElementById('elBest').textContent=(G.endlessBest||0)+' 关';
@@ -8947,6 +9027,11 @@ function startEndlessWave(){
     // 重新应用永久被动
     if(a.id==='shield')a.defBuff=a.def;
     if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}
+    // 应用词条效果：每关开始护盾
+    if(a._endlessShield){
+      const sh=Math.round(a.maxHp*a._endlessShield/100);
+      a.shield+=sh;
+    }
   });
   B={allies,enemies,round:1,order:[],lv:-1,isEndless:true,log:[],done:false,
     shieldFirst:true,busy:false,paused:false,stats:{}};
@@ -8999,12 +9084,26 @@ function endEndlessWave(vic){
 
 function showEndlessInterim(){
   const es=endlessState;if(!es)return;
-  document.getElementById('resCloseBtn').style.display='none'; // 隐藏默认确定按钮
+  document.getElementById('resCloseBtn').style.display='none';
   const box=document.getElementById('resBox');
   box.className='res-box vic';
   document.getElementById('resTitle').textContent=`第 ${es.wave} 关 通过！`;
+
+  // 每5关弹出词条选择
+  if(es.wave%5===0){
+    showEndlessAffixChoice();
+    return;
+  }
+
   let html=`<div class="ri" style="color:#ff6600">🌀 无尽深渊 · 第 ${es.wave} 关胜利</div>`;
   html+=`<div class="ri" style="color:var(--green)">所有角色已回复20%血量</div>`;
+  // 显示已有词条
+  if(es.buffs&&es.buffs.length){
+    html+=`<div style="margin:6px 0;font-size:11px;color:var(--text2)">── 已有词条 ──</div>`;
+    es.buffs.forEach(b=>{
+      html+=`<div style="font-size:11px;color:${EL_TIER[b.tier].color}">[${EL_TIER[b.tier].name}] ${b.name}: ${b.desc}</div>`;
+    });
+  }
   html+=`<div style="margin:8px 0;font-size:12px;color:var(--text2)">── 英雄状态 ──</div>`;
   es.allies.forEach(a=>{
     const pct=Math.round(a.hp/a.maxHp*100);
@@ -9018,6 +9117,77 @@ function showEndlessInterim(){
   document.getElementById('resRew').innerHTML=html;
   document.getElementById('resOv').classList.add('show');
   renderBattleStats();
+}
+
+function showEndlessAffixChoice(){
+  const es=endlessState;if(!es)return;
+  _endlessChoices=generateEndlessChoices();
+  let html=`<div class="ri" style="color:#ff6600">🌀 第 ${es.wave} 关通过！词条强化！</div>`;
+  html+=`<div class="ri" style="color:var(--text2);font-size:12px">选择一项全体增益（放弃不可重来）</div>`;
+  html+=`<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0">`;
+  _endlessChoices.forEach((c,i)=>{
+    const t=EL_TIER[c.tier];
+    const desc=c.afx.desc.replace('{v}',c.val);
+    html+=`<div onclick="pickEndlessAffix(${i})" style="cursor:pointer;border:2px solid ${t.color};border-radius:10px;padding:12px;width:140px;text-align:center;background:linear-gradient(180deg,#1a0a2a,#0a0a1a);transition:transform .15s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">`;
+    html+=`<div style="font-size:14px;font-weight:bold;color:${t.color}">[${t.name}]</div>`;
+    html+=`<div style="font-size:15px;font-weight:bold;color:#e8dcc8;margin:4px 0">${c.afx.name}</div>`;
+    html+=`<div style="font-size:12px;color:${t.color}">${desc}</div>`;
+    html+=`</div>`;
+  });
+  html+=`</div>`;
+  // 已有词条
+  if(es.buffs&&es.buffs.length){
+    html+=`<div style="margin:8px 0;font-size:11px;color:var(--text2)">── 已有词条 ──</div>`;
+    es.buffs.forEach(b=>{
+      html+=`<div style="font-size:11px;color:${EL_TIER[b.tier].color}">[${EL_TIER[b.tier].name}] ${b.name}: ${b.desc}</div>`;
+    });
+  }
+  html+=`<button class="med-btn" style="background:linear-gradient(135deg,#2ecc71,#27ae60);padding:8px 20px;margin-top:8px" onclick="exitEndless()">💰 放弃词条，退出结算</button>`;
+  document.getElementById('resRew').innerHTML=html;
+  document.getElementById('resOv').classList.add('show');
+  renderBattleStats();
+}
+
+function pickEndlessAffix(idx){
+  const es=endlessState;if(!es||!_endlessChoices)return;
+  const choice=_endlessChoices[idx];
+  const t=EL_TIER[choice.tier];
+  const desc=choice.afx.desc.replace('{v}',choice.val);
+  // 记录词条
+  if(!es.buffs)es.buffs=[];
+  es.buffs.push({id:choice.afx.id,name:choice.afx.name,desc,tier:choice.tier,val:choice.val});
+  // 应用效果到友军
+  const applyFn=choice.afx.effect(choice.val);
+  applyFn(es.allies);
+  _endlessChoices=null;
+  toast(`获得 [${t.name}] ${choice.afx.name}！`);
+  // 继续显示中间结算界面
+  showEndlessInterim_postAffix();
+}
+
+function showEndlessInterim_postAffix(){
+  const es=endlessState;if(!es)return;
+  document.getElementById('resCloseBtn').style.display='none';
+  document.getElementById('resTitle').textContent=`第 ${es.wave} 关 通过！`;
+  let html=`<div class="ri" style="color:#ff6600">🌀 无尽深渊 · 第 ${es.wave} 关胜利</div>`;
+  html+=`<div class="ri" style="color:var(--green)">所有角色已回复20%血量</div>`;
+  if(es.buffs&&es.buffs.length){
+    html+=`<div style="margin:6px 0;font-size:11px;color:var(--text2)">── 已有词条 ──</div>`;
+    es.buffs.forEach(b=>{
+      html+=`<div style="font-size:11px;color:${EL_TIER[b.tier].color}">[${EL_TIER[b.tier].name}] ${b.name}: ${b.desc}</div>`;
+    });
+  }
+  html+=`<div style="margin:8px 0;font-size:12px;color:var(--text2)">── 英雄状态 ──</div>`;
+  es.allies.forEach(a=>{
+    const pct=Math.round(a.hp/a.maxHp*100);
+    const col=pct>60?'var(--green)':pct>30?'#f39c12':'var(--red)';
+    html+=`<div class="ri">${a.name} <span style="color:${col}">${a.hp}/${a.maxHp} (${pct}%)</span></div>`;
+  });
+  html+=`<div style="margin:10px 0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">`;
+  html+=`<button class="med-btn" style="background:linear-gradient(135deg,#ff6600,#ff3300);padding:8px 20px" onclick="continueEndless()">🌀 继续挑战</button>`;
+  html+=`<button class="med-btn" style="background:linear-gradient(135deg,#2ecc71,#27ae60);padding:8px 20px" onclick="exitEndless()">💰 退出结算</button>`;
+  html+=`</div>`;
+  document.getElementById('resRew').innerHTML=html;
 }
 
 function continueEndless(){
@@ -9038,54 +9208,79 @@ function exitEndless(){
   // 结算奖励
   let rewHtml=`<div class="ri" style="color:#ff6600">🌀 无尽深渊结算</div>`;
   rewHtml+=`<div class="ri" style="color:var(--gold)">通关 ${cleared} 关</div>`;
-  // 金币奖励：基础+每关递增
-  const goldBase=5000+cleared*2000;
+  // 金币奖励：基础+每关递增（后期指数增长）
+  const goldBase=5000+cleared*2000+Math.max(0,cleared-10)*Math.max(0,cleared-10)*500;
   G.gold+=goldBase;
-  rewHtml+=`<div class="ri">💰 金币 +${goldBase}</div>`;
-  // 每过3关给一个英雄
-  if(cleared>=3){
-    const heroCount=Math.floor(cleared/3);
-    for(let i=0;i<Math.min(heroCount,5);i++){
+  rewHtml+=`<div class="ri">💰 金币 +${formatDmg(goldBase)}</div>`;
+  // 每过2关给一个英雄（后期高星）
+  if(cleared>=2){
+    const heroCount=Math.min(10,Math.floor(cleared/2));
+    for(let i=0;i<heroCount;i++){
       const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
-      const star=ri(Math.min(6,Math.floor(cleared/4)),Math.min(6,3+Math.floor(cleared/5)));
+      const minS=Math.min(6,Math.floor(cleared/3));
+      const maxS=Math.min(6,2+Math.floor(cleared/4));
+      const star=ri(Math.min(minS,maxS),Math.max(minS,maxS));
       const uid=G.uid++;
       addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:0});
       rewHtml+=`<div class="ri" style="color:#9b59b6">🃏 获得 ${H[hid].name} ${'★'.repeat(star)}</div>`;
     }
   }
-  // 每过4关给一个装备
-  if(cleared>=4){
-    const eqCount=Math.floor(cleared/4);
-    for(let i=0;i<Math.min(eqCount,5);i++){
+  // 每过3关给一个装备
+  if(cleared>=3){
+    const eqCount=Math.min(8,Math.floor(cleared/3));
+    for(let i=0;i<eqCount;i++){
       const eqKeys=Object.keys(EQ),eid=eqKeys[ri(0,eqKeys.length-1)];
-      const eqStar=ri(Math.min(6,Math.floor(cleared/5)),Math.min(6,2+Math.floor(cleared/6)));
+      const minS=Math.min(6,Math.floor(cleared/4));
+      const maxS=Math.min(6,2+Math.floor(cleared/4));
+      const eqStar=ri(Math.min(minS,maxS),Math.max(minS,maxS));
       const eqUid=G.eqUid++;
-      addEquip({id:eid,star:eqStar,uid:eqUid});
-      rewHtml+=`<div class="ri">🔧 获得 ${EQ[eid].name} ${'★'.repeat(eqStar)}</div>`;
+      let eqRank=0;
+      if(cleared>=10&&Math.random()<0.3)eqRank=ri(1,Math.min(5,Math.floor(cleared/5)));
+      addEquip({id:eid,star:eqStar,uid:eqUid,rank:eqRank});
+      const rkStr=eqRank>0?` 阶${eqRank}`:'';
+      rewHtml+=`<div class="ri">🔧 获得 ${EQ[eid].name} ${'★'.repeat(eqStar)}${rkStr}</div>`;
     }
   }
-  // 每过7关给圣遗物
-  if(cleared>=7){
-    const relicCount=Math.floor(cleared/7);
+  // 每过5关给圣遗物
+  if(cleared>=5){
+    const relicCount=Math.min(5,Math.floor(cleared/5));
     const rKeys=Object.keys(RELICS);
-    for(let i=0;i<Math.min(relicCount,3);i++){
+    for(let i=0;i<relicCount;i++){
       const rid=rKeys[ri(0,rKeys.length-1)];
-      const rs=ri(Math.min(4,Math.floor(cleared/6)),Math.min(6,2+Math.floor(cleared/8)));
+      const minS=Math.min(6,Math.floor(cleared/6));
+      const maxS=Math.min(6,2+Math.floor(cleared/6));
+      const rs=ri(Math.min(minS,maxS),Math.max(minS,maxS));
       const rUid=G.relicUid++;
       addRelic({id:rid,star:rs,uid:rUid});
       rewHtml+=`<div class="ri" style="color:#9b59b6">🔮 获得 ${RELICS[rid].name} ${'★'.repeat(rs)}</div>`;
     }
   }
-  // 高关奖励：10关以上额外
+  // 里程碑奖励
   if(cleared>=10){
-    const bonus=Math.round(cleared*1000);
+    const bonus=Math.round(cleared*2000);
     G.gold+=bonus;
-    rewHtml+=`<div class="ri" style="color:#f1c40f">🏆 深渊挑战奖励 +${bonus}💰</div>`;
+    rewHtml+=`<div class="ri" style="color:#f1c40f">🏆 深渊挑战奖励 +${formatDmg(bonus)}💰</div>`;
   }
   if(cleared>=15){
     const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
-    addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:0});
-    rewHtml+=`<div class="ri" style="color:var(--gold)">👑 15关里程碑！${H[hid].name} ★★★★★★</div>`;
+    const rk15=ri(1,Math.min(5,Math.floor(cleared/5)));
+    addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:rk15});
+    rewHtml+=`<div class="ri" style="color:var(--gold)">👑 15关里程碑！${H[hid].name} ★★★★★★ 阶${rk15}</div>`;
+  }
+  if(cleared>=20){
+    const keys=Object.keys(H);
+    for(let i=0;i<2;i++){
+      const hid=keys[ri(0,keys.length-1)];
+      addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:ri(2,7)});
+      rewHtml+=`<div class="ri" style="color:var(--gold)">👑 20关里程碑！${H[hid].name} ★★★★★★ 高阶！</div>`;
+    }
+  }
+  // 词条总结
+  if(es.buffs&&es.buffs.length){
+    rewHtml+=`<div style="margin:10px 0;font-size:12px;color:var(--text2)">── 获得词条 ──</div>`;
+    es.buffs.forEach(b=>{
+      rewHtml+=`<div style="font-size:11px;color:${EL_TIER[b.tier].color}">[${EL_TIER[b.tier].name}] ${b.name}: ${b.desc}</div>`;
+    });
   }
   // 输出统计
   rewHtml+=`<div style="margin:10px 0;font-size:12px;color:var(--text2)">── 总输出统计 ──</div>`;
