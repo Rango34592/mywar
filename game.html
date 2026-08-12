@@ -1346,18 +1346,18 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
     </div>
     <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
       <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 创建房间</button>
-      <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:12px 28px;font-size:15px" onclick="olShowJoin()">🔗 加入房间</button>
     </div>
-    <div id="olJoinBox" style="display:none;margin-top:12px">
-      <div style="margin-bottom:8px;font-size:13px;color:var(--text2)">输入房主IP地址：</div>
-      <input id="olJoinIp" type="text" placeholder="例如 192.168.1.100" value="" style="width:200px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
-      <div style="margin:8px 0;font-size:13px;color:var(--text2)">房间号：</div>
-      <input id="olJoinCode" type="text" placeholder="房间号" style="width:100px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
-      <br>
-      <button class="med-btn" style="margin-top:10px;background:linear-gradient(180deg,#e67e22,#d35400);padding:8px 24px" onclick="olJoinRoom()">加入</button>
-      <div style="margin-top:6px;font-size:10px;color:#555">同一WiFi下默认IP同房主页面地址</div>
+    <div style="margin-bottom:8px;font-size:13px;color:var(--text2)">加入房间（输入4位房间号）：</div>
+    <div style="display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:12px">
+      <input id="olJoinCode" type="text" placeholder="房间号" maxlength="4" style="width:100px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:18px;text-align:center;letter-spacing:4px">
+      <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:10px 20px;font-size:14px" onclick="olJoinRoom()">加入</button>
     </div>
-    <div style="margin-top:20px;font-size:10px;color:#666;line-height:1.6;text-align:center">
+    <div id="olJoinIpHint" style="display:none;margin-top:8px">
+      <div style="font-size:11px;color:#e67e22;margin-bottom:4px">连接失败？请手动输入房主IP：</div>
+      <input id="olJoinIp" type="text" placeholder="192.168.x.x" style="width:150px;padding:6px 10px;background:#1a152e;color:#e8dcc8;border:2px solid #e67e22;border-radius:6px;font-size:13px;text-align:center">
+      <button class="med-btn" style="margin-left:4px;padding:6px 12px;font-size:12px;background:#e67e22" onclick="olJoinRoomManual()">重试</button>
+    </div>
+    <div style="margin-top:16px;font-size:10px;color:#666;line-height:1.6;text-align:center">
       双方使用自己的存档阵容对决<br>
       <span id="olPlatformHint"></span>
     </div>
@@ -1366,11 +1366,11 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
   <div id="olRoom" style="display:none;text-align:center;width:100%;max-width:400px">
     <div style="background:linear-gradient(135deg,#1a2a4a,#0a1a2a);border:2px solid #3498db;border-radius:12px;padding:16px;margin-bottom:12px">
       <div style="font-size:13px;color:var(--text2)">房间号</div>
-      <div id="olRoomCode" style="font-size:32px;color:#3498db;font-weight:bold;letter-spacing:4px;margin:8px 0">----</div>
+      <div id="olRoomCode" style="font-size:36px;color:#3498db;font-weight:bold;letter-spacing:8px;margin:8px 0">----</div>
       <div id="olRoomStatus" style="font-size:12px;color:#2ecc71">等待对手加入...</div>
     </div>
     <div id="olMyIp" style="background:linear-gradient(135deg,#1a1a2e,#0a0a1a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;cursor:pointer" onclick="olCopyIp()" title="点击复制">
-      <div style="color:var(--text2);margin-bottom:4px">告诉对手你的IP和房间号（点击复制）</div>
+      <div style="color:var(--text2);margin-bottom:4px">把房间号告诉对手即可（点击复制）</div>
       <div id="olIpText" style="color:#3498db;font-size:14px;font-weight:bold;word-break:break-all"></div>
     </div>
     <button class="med-btn" style="background:linear-gradient(180deg,#c0392b,#96281b);padding:8px 20px" onclick="olLeaveRoom()">离开房间</button>
@@ -9887,7 +9887,8 @@ function rOnlinePvp(){
   document.getElementById('olRoom').style.display='none';
   document.getElementById('olSetup').style.display='none';
   document.getElementById('olBattle').style.display='none';
-  document.getElementById('olJoinBox').style.display='none';
+  const ipHint=document.getElementById('olJoinIpHint');
+  if(ipHint)ipHint.style.display='none';
   document.getElementById('olMyIp').textContent='';
   // 检测服务器
   olCheckServer();
@@ -9895,32 +9896,30 @@ function rOnlinePvp(){
   const hintEl=document.getElementById('olPlatformHint');
   if(hintEl){
     const isMobile='ontouchstart' in window||navigator.maxTouchPoints>0;
-    hintEl.textContent=isMobile?'手机端请选择「加入房间」，电脑端创建房间':'电脑端启动游戏即自动开启联机服务';
-  }
-}
-
-function olShowJoin(){
-  const box=document.getElementById('olJoinBox');
-  box.style.display=box.style.display==='none'?'':'none';
-  // 自动填入当前页面的hostname（同一WiFi下通常就是房主IP）
-  if(box.style.display!=='none'){
-    const ipEl=document.getElementById('olJoinIp');
-    if(ipEl&&!ipEl.value)ipEl.value=location.hostname||'';
+    hintEl.textContent=isMobile?'手机端选择「加入」，输入房间号即可':'电脑端启动游戏即自动开启联机服务';
   }
 }
 
 function olCreateRoom(){
   const code=String(ri(1000,9999));
-  // 自动检测当前页面的hostname作为WS地址
+  // 自动用当前页面hostname作为WS地址
   const wsUrl='ws://'+location.hostname+':8766';
   olConnect(wsUrl,code,'host');
 }
 
 function olJoinRoom(){
-  const ip=document.getElementById('olJoinIp').value.trim();
   const code=document.getElementById('olJoinCode').value.trim();
-  if(!ip){toast('请输入房主IP');return}
   if(!code){toast('请输入房间号');return}
+  // 自动用当前页面hostname（同WiFi下就是房主IP）
+  const wsUrl='ws://'+location.hostname+':8766';
+  olConnect(wsUrl,code,'client');
+}
+
+function olJoinRoomManual(){
+  const code=document.getElementById('olJoinCode').value.trim();
+  const ip=document.getElementById('olJoinIp').value.trim();
+  if(!code){toast('请输入房间号');return}
+  if(!ip){toast('请输入房主IP');return}
   const wsUrl='ws://'+ip+':8766';
   olConnect(wsUrl,code,'client');
 }
@@ -9959,9 +9958,12 @@ function olConnect(wsUrl,code,role){
   };
   
   ws.onerror=()=>{
-    toast('连接失败，请检查IP和服务器是否开启');
+    toast('连接失败');
     olWs=null;
     olRole=null;olRoomCode=null;
+    // 显示手动输入IP的选项
+    const hint=document.getElementById('olJoinIpHint');
+    if(hint)hint.style.display='';
     rOnlinePvp();
   };
 }
