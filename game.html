@@ -1383,7 +1383,7 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
       <div id="olRoomStatus" style="font-size:12px;color:#2ecc71">等待对手加入...</div>
     </div>
     <div id="olMyIp" style="background:linear-gradient(135deg,#1a1a2e,#0a0a1a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;cursor:pointer" onclick="olCopyIp()" title="点击复制">
-      <div style="color:var(--text2);margin-bottom:4px">把房间号告诉对手，对手输入即可加入（点击复制）</div>
+      <div style="color:var(--text2);margin-bottom:4px">把以下信息告诉对手，对手输入即可加入（点击复制）</div>
       <div id="olIpText" style="color:#3498db;font-size:14px;font-weight:bold;word-break:break-all"></div>
     </div>
     <button class="med-btn" style="background:linear-gradient(180deg,#c0392b,#96281b);padding:8px 20px" onclick="olLeaveRoom()">离开房间</button>
@@ -9946,7 +9946,8 @@ function olInitSignaling(){
 function olCopyIp(){
   const code=document.getElementById('olRoomCode');
   if(!code)return;
-  navigator.clipboard.writeText(code.textContent).then(()=>toast('已复制房间号！')).catch(()=>toast('复制失败'));
+  const text=document.getElementById('olIpText').textContent;
+  navigator.clipboard.writeText(text).then(()=>toast('已复制！发给对手即可')).catch(()=>toast('复制失败'));
 }
 
 function rOnlinePvp(){
@@ -10005,8 +10006,8 @@ function olCreateRoom(){
     document.getElementById('olRoomCode').textContent=code;
     document.getElementById('olRoomStatus').textContent='等待对手加入...';
     document.getElementById('olRoomStatus').style.color='#2ecc71';
-    document.getElementById('olIpText').textContent='房间号: '+code;
-    toast('房间已创建！告诉对手房间号即可');
+    document.getElementById('olIpText').textContent=olServerMode==='cloud'?'云服务器 · 房间号: '+code:olGetHost()+':'+olGetPort()+' · 房间号: '+code;
+    toast('房间已创建！把房间信息告诉对手即可');
   });
   
   olPeer.on('connection',conn=>{
