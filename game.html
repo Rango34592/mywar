@@ -608,6 +608,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 
   /* === Realm === */
   #screen-realm{padding:4px 8px!important;gap:4px!important}
+  #screen-endless{padding:4px 8px!important;gap:4px!important}
   .rm-sub{font-size:9px!important;margin-bottom:2px!important}
   .rm-info{padding:4px!important;margin-bottom:4px!important}
   .rm-info-row{font-size:10px!important}
@@ -1071,6 +1072,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 
 /* Realm */
 #screen-realm{padding:15px;align-items:center;overflow-y:auto}
+#screen-endless{padding:15px;align-items:center;overflow-y:auto}
 .rm-sub{font-size:12px;color:var(--text2);margin-bottom:14px;text-align:center}
 .rm-info{background:linear-gradient(135deg,var(--card),var(--card2));border:2px solid var(--red);border-radius:10px;padding:12px;width:92%;max-width:460px;margin-bottom:12px}
 .rm-info-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
@@ -1151,6 +1153,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   <audio id="bgmChDemon" loop preload="auto"><source src="mywar音乐/恶魔军团.mp3" type="audio/mpeg"></audio>
   <audio id="bgmChDeath" loop preload="auto"><source src="mywar音乐/死亡骑士团.mp3" type="audio/mpeg"></audio>
   <audio id="bgmChDemonking" loop preload="auto"><source src="mywar音乐/魔王降临.mp3" type="audio/mpeg"></audio>
+  <audio id="bgmEndless" loop preload="auto"><source src="mywar音乐/无尽背景音乐.mp3" type="audio/mpeg"></audio>
+  <audio id="sfxEndlessWin" preload="auto"><source src="mywar音乐/无尽胜利.mp3" type="audio/mpeg"></audio>
+  <audio id="sfxEndlessLose1" preload="auto"><source src="mywar音乐/无尽战败1.mp3" type="audio/mpeg"></audio>
+  <audio id="sfxEndlessLose2" preload="auto"><source src="mywar音乐/无尽战败2.mp3" type="audio/mpeg"></audio>
 
 <!-- 角色 -->
 <div id="screen-profile" class="screen active">
@@ -1230,6 +1236,27 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   </div>
   <div style="margin-top:12px;font-size:10px;color:#999;text-align:center;line-height:1.6">
     按排名决定难度 | 胜利获得丰厚奖励 | 失败则离开
+  </div>
+</div>
+
+<!-- 无尽模式 -->
+<div id="screen-endless" class="screen">
+  <div class="med-title" style="color:#ff6600;text-shadow:0 0 15px rgba(255,102,0,.5),0 2px 4px rgba(0,0,0,.6)">无 尽 深 渊</div>
+  <div class="rm-sub" style="color:#ff9944">一关一关打下去，你能走多远？</div>
+  <div class="rm-info med-card">
+    <div class="rm-info-row"><span>最高纪录</span><span class="rm-info-val" id="elBest" style="color:#ff6600">0 关</span></div>
+    <div class="rm-info-row"><span>上次成绩</span><span class="rm-info-val" id="elLast">0 关</span></div>
+  </div>
+  <div style="margin:12px 0;text-align:center">
+    <div style="font-size:40px;margin-bottom:8px">🌀🌀🌀</div>
+    <div style="font-size:11px;color:var(--text2)">越打越强 · 血量继承 · 胜后回血20%</div>
+    <div style="font-size:11px;color:var(--text2)">参与费用 <span style="color:var(--gold)">50,000💰</span></div>
+  </div>
+  <div class="rm-acts">
+    <button class="btn-realm med-btn" style="background:linear-gradient(135deg,#ff6600,#ff3300)" onclick="startEndless()">🌀 进入深渊</button>
+  </div>
+  <div style="margin-top:12px;font-size:10px;color:#999;text-align:center;line-height:1.6">
+    退出时按通关数结算奖励 | 失败不结算 | 英雄血量不重置
   </div>
 </div>
 
@@ -1722,7 +1749,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <h2 id="resTitle"></h2>
     <div class="res-rew" id="resRew"></div>
     <div id="resStats"></div>
-    <button class="btn-res" onclick="closeRes()">确定</button>
+    <button class="btn-res" id="resCloseBtn" onclick="closeRes()">确定</button>
   </div>
 </div>
 
@@ -2059,6 +2086,7 @@ let G = {
   challengeCleared:{}, // challengeId -> highest difficulty cleared (0=none,1=普通,2=艰难,3=恶魔)
   achievements:{},
   seenEq:[],seenHero:[],seenRelic:[], // 图鉴收集记录（曾拥有过的装备/英雄/圣遗物ID）
+  endlessBest:0,endlessLast:0,
   _user:null,_slot:null
 };
 
@@ -2177,7 +2205,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 // ===== BGM MANAGER =====
 const BGM_IDS=['bgmMain','bgm','bgmRealm','bgmShop','bgmTitanWall','bgmTitanDebuff','bgmTitanStun',
-  'bgmChMushroom','bgmChSkeleton','bgmChGhost','bgmChBeast','bgmChAssassin','bgmChDemon','bgmChDeath','bgmChDemonking'];
+  'bgmChMushroom','bgmChSkeleton','bgmChGhost','bgmChBeast','bgmChAssassin','bgmChDemon','bgmChDeath','bgmChDemonking','bgmEndless'];
 const CHALLENGE_BGM={mushroom:'bgmChMushroom',skeleton:'bgmChSkeleton',ghost:'bgmChGhost',
   beast:'bgmChBeast',assassin:'bgmChAssassin',demon:'bgmChDemon',death:'bgmChDeath',demonking:'bgmChDemonking'};
 let _currentBgmEl=null;
@@ -2187,6 +2215,7 @@ function playBGM(track,restart){
   if(track==='main')el=document.getElementById('bgmMain');
   else if(track==='shop')el=document.getElementById('bgmShop');
   else if(track==='realm')el=document.getElementById('bgmRealm');
+  else if(track==='endless')el=document.getElementById('bgmEndless');
   else if(track==='titanWall')el=document.getElementById('bgmTitanWall');
   else if(track==='titanDebuff')el=document.getElementById('bgmTitanDebuff');
   else if(track==='titanStun')el=document.getElementById('bgmTitanStun');
@@ -2280,14 +2309,14 @@ function toast(msg){
 
 // ============= SCREENS =============
 // Navigation grouping: sub-screen → parent nav item
-const NAV_PARENT={profile:'profile',achievements:'profile',adventure:'adventure',challenge:'adventure',realm:'adventure',
+const NAV_PARENT={profile:'profile',achievements:'profile',adventure:'adventure',challenge:'adventure',realm:'adventure',endless:'adventure',
   heroes:'heroes',equips:'heroes',codex:'heroes',formation:'heroes',
   arena:'arena',pvp:'arena',titans:'arena',worldboss:'arena',
   shop:'shop',recruit:'shop',forge:'shop',battle:'battle'};
 // Sub-tab definitions: parent → [{id, label}]
 const NAV_TABS={
   profile:[{id:'profile',label:'👤 角色'},{id:'achievements',label:'🏆 成就'}],
-  adventure:[{id:'adventure',label:'🗺 冒险'},{id:'challenge',label:'💀 挑战'},{id:'realm',label:'🔮 秘境'}],
+  adventure:[{id:'adventure',label:'🗺 冒险'},{id:'challenge',label:'💀 挑战'},{id:'realm',label:'🔮 秘境'},{id:'endless',label:'🌀 无尽'}],
   heroes:[{id:'heroes',label:'⚔ 英雄'},{id:'equips',label:'🔧 装备'},{id:'codex',label:'📖 图鉴'}],
   arena:[{id:'arena',label:'🏟 竞技场'},{id:'titans',label:'👑 三巨头'},{id:'worldboss',label:'🐉 世界Boss'},{id:'pvp',label:'⚔ 决斗'}],
   shop:[{id:'shop',label:'🏪 商店'},{id:'recruit',label:'🎰 招募'},{id:'forge',label:'🔨 合成'}]
@@ -2318,11 +2347,13 @@ function showScreen(s){
   if(s==='formation')rForm();if(s==='recruit')rRecruit();if(s==='forge')rForge();
   if(s==='equips')rEquips();
   if(s==='arena')rArena();if(s==='codex')rCodex();
-  if(s==='shop')rShop();if(s==='realm')rRealm();if(s==='challenge')rChallenge();
+  if(s==='shop')rShop();if(s==='realm')rRealm();if(s==='endless')rEndless();
+  if(s==='challenge')rChallenge();
   if(s==='pvp')rPvp();if(s==='titans')rTitans();if(s==='worldboss')rWorldBoss();
   // BGM switching
   if(s==='battle'){
     if(B&&B.isRealm)playBGM('realm');
+    else if(B&&B.isEndless)playBGM('endless');
     else if(B&&B.isTitan){
       const titanIdx=B.titanIdx;
       if(titanIdx===0)playBGM('titanWall');
@@ -3430,6 +3461,11 @@ const ACHIEVEMENTS=[
   {id:'first5Star',name:'破星之人',desc:'首次获得5星英雄',icon:'🌟'},
   {id:'rank5',name:'阶数突破',desc:'首次将英雄升到5阶',icon:'⚖️'},
   {id:'richBattle',name:'土豪',desc:'单场战斗获得3000+金币',icon:'💰'},
+  // ---- 无尽 ----
+  {id:'endless5',name:'深渊新手',desc:'无尽模式通过5关',icon:'🌀'},
+  {id:'endless10',name:'深渊勇者',desc:'无尽模式通过10关',icon:'🔥'},
+  {id:'endless15',name:'深渊传说',desc:'无尽模式通过15关',icon:'💀'},
+  {id:'endless20',name:'深渊征服者',desc:'无尽模式通过20关',icon:'👑'},
 ];
 
 let _battleGoldEarned=0,_goldBefore=0;
@@ -6823,7 +6859,11 @@ function endBattle(vic){
   const box=document.getElementById('resBox');
   box.className='res-box '+(vic||B.isWorldBoss?'vic':'def');
   document.getElementById('resTitle').textContent=B.isWorldBoss?'战 斗 结 束':(vic?'胜 利 ！':'败 北 ...');
-  sfx(B.isWorldBoss?'victory':(vic?'victory':'defeat'));
+  if(B.isEndless){
+    // 无尽模式不在这里播sfx，由endEndlessWave处理
+  }else{
+    sfx(B.isWorldBoss?'victory':(vic?'victory':'defeat'));
+  }
   const rew=document.getElementById('resRew');rew.innerHTML='';
   if(B.isWorldBoss){
     endWorldBossBattle();
@@ -6831,6 +6871,13 @@ function endBattle(vic){
     endTitanBattle(vic);
   }else if(B.isArena){
     endArenaBattle(vic);
+  }else if(B.isEndless){
+    endEndlessWave(vic);
+    renderBattleStats();
+    document.getElementById('resOv').classList.add('show');
+    renderB();
+    saveGame();
+    return; // 无尽模式自己处理结算界面
   }else if(B.isRealm){
     endRealmBattle(vic);
   }else if(B.isChallenge){
@@ -7391,22 +7438,42 @@ function closeRes(){
   const wasPvp=B&&B.isPvp;
   const wasTitan=B&&B.isTitan;
   const wasWorldBoss=B&&B.isWorldBoss;
+  const wasEndless=B&&B.isEndless;
   document.getElementById('resOv').classList.remove('show');
   if(_battleGoldEarned===0&&B)_battleGoldEarned=Math.max(0,G.gold-(_goldBefore||0));
   stopBGM();checkAchievements();
   B=null;realmState=null;
-  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasChallenge?'challenge':wasPvp?'pvp':'adventure');
+  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasEndless?'endless':wasChallenge?'challenge':wasPvp?'pvp':'adventure');
 }
 function retreat(){
   if(!confirm('确认撤退？'))return;
   stopBGM();
+  const wasEndless=B&&B.isEndless;
+  // 无尽模式撤退按失败处理
+  if(wasEndless&&endlessState){
+    const es=endlessState;
+    // 累积统计
+    if(B&&B.stats){
+      B.allies.forEach(u=>{
+        const st=B.stats[u.uid]||{dmg:0,absorb:0,heal:0};
+        es.totalDmg[u.uid]=(es.totalDmg[u.uid]||0)+st.dmg;
+        es.totalAbsorb[u.uid]=(es.totalAbsorb[u.uid]||0)+st.absorb;
+        es.totalHeal[u.uid]=(es.totalHeal[u.uid]||0)+st.heal;
+      });
+    }
+    const cleared=es.wave-1;
+    G.endlessLast=cleared;
+    if(!G.endlessBest||cleared>G.endlessBest)G.endlessBest=cleared;
+    checkEndlessAch(cleared);
+    endlessState=null;
+  }
   const wasArena=B&&B.isArena;
   const wasRealm=B&&B.isRealm;
   const wasPvp=B&&B.isPvp;
   const wasTitan=B&&B.isTitan;
   const wasWorldBoss=B&&B.isWorldBoss;
   B=null;
-  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasPvp?'pvp':'adventure');
+  showScreen(wasWorldBoss?'worldboss':wasTitan?'titans':wasArena?'arena':wasRealm?'realm':wasEndless?'endless':wasPvp?'pvp':'adventure');
 }
 
 // ============= WORLD BOSS =============
@@ -8598,6 +8665,359 @@ function endRealmBattle(vic){
   realmState=null;
 }
 
+// ============= ENDLESS MODE =============
+let endlessState=null; // {wave, allies, totalDmg:{}, bestWave, totalGold}
+
+function rEndless(){
+  document.getElementById('elBest').textContent=(G.endlessBest||0)+' 关';
+  document.getElementById('elLast').textContent=(G.endlessLast||0)+' 关';
+}
+
+function genEndlessEnemies(wave){
+  // 难度曲线：wave从1开始，平滑递增
+  // wave 1: ≈秘境diff 2   wave 5: ≈diff 4   wave 10: ≈diff 6   wave 20+: 远超正常
+  const diff=Math.min(7,1+wave*0.6); // 基础难度
+  const overLevel=Math.max(0,wave-10); // 超过10关后的额外倍率
+  const overMult=1+overLevel*0.15; // 每超1关+15%全属性
+  const hKeys=Object.keys(H);
+  const mPool=MONSTERS;
+  const eqKeys=Object.keys(EQ);
+  let cnt=5;
+  if(wave>=5&&Math.random()<0.3)cnt=6;
+  if(wave>=15&&Math.random()<0.2)cnt=7;
+  // 星级：平滑上升，可超6★
+  const heroStar=Math.min(20,Math.max(2,Math.floor(2+wave*0.4)));
+  const eqMaxStar=Math.min(20,Math.max(0,heroStar-1));
+  const heroStarMult=Math.pow(1.2,heroStar-1);
+  // 阶数概率递增
+  const rankChance=Math.min(1,0.1+wave*0.05);
+  const maxRank=Math.min(9,Math.floor(wave/3));
+  // 圣遗物概率
+  const relicChance=Math.min(0.9,0.1+wave*0.04);
+  const team=[];let fCnt=0;
+  const usedHIds=new Set();
+  for(let i=0;i<cnt;i++){
+    const isHero=Math.random()<0.6;
+    if(isHero){
+      let hid;
+      do{hid=hKeys[ri(0,hKeys.length-1)]}while(usedHIds.has(hid)&&usedHIds.size<hKeys.length);
+      usedHIds.add(hid);
+      const d=H[hid];
+      const row=(fCnt<3&&d.row==='front')?'front':'back';
+      if(row==='front')fCnt++;
+      let atk=Math.round(d.atk*heroStarMult),def=Math.round(d.def*heroStarMult),hp=Math.round(d.hp*heroStarMult),crit=d.crit,spd=d.spd;
+      // 阶数
+      let heroRank=0;
+      if(heroStar>=6&&Math.random()<rankChance){
+        heroRank=ri(1,Math.max(1,maxRank));
+      }
+      const rankMult=1+heroRank*0.05;
+      atk=Math.round(atk*rankMult);def=Math.round(def*rankMult);hp=Math.round(hp*rankMult);
+      // 装备
+      const eqList=[];let eqDmgReduce=0,eqHealBoost=0,eqLifesteal=0,eqThorns=0,eqCdmg=0;
+      const eqEquipChance=Math.min(0.95,0.3+wave*0.04);
+      for(let s=0;s<2;s++){
+        if(eqMaxStar>0&&Math.random()<eqEquipChance){
+          const eqStar=ri(Math.max(1,eqMaxStar-1),eqMaxStar);
+          const eid=eqKeys[ri(0,eqKeys.length-1)];
+          let eqRank=0;
+          if(Math.random()<rankChance){eqRank=ri(1,Math.max(1,maxRank))}
+          const b=eqBonus({id:eid,star:Math.min(6,eqStar),rank:eqRank});
+          atk+=b.atk;def+=b.def;hp+=b.hp;crit+=b.crit;spd+=b.spd;eqCdmg+=b.cdmg;
+          eqDmgReduce+=b.dmgReduce;eqHealBoost+=b.healBoost;eqLifesteal+=b.lifesteal;eqThorns+=b.thorns;
+          eqList.push({id:eid,star:eqStar,rank:eqRank});
+        }
+      }
+      // 圣遗物
+      let hasRelic=false,relicId=null;
+      if(relicChance>0&&Math.random()<relicChance&&RELICS[hid]){
+        hasRelic=true;relicId=hid;
+        const rl=RELICS[hid];
+        if(rl.atkPct)atk+=Math.round(atk*rl.atkPct);
+        if(rl.defPct)def+=Math.round(def*rl.defPct);
+        if(rl.hpPct)hp+=Math.round(hp*rl.hpPct);
+        if(rl.critFlat)crit+=rl.critFlat;
+        if(rl.cdmgFlat)eqCdmg+=rl.cdmgFlat;
+      }
+      // 超阶倍率
+      atk=Math.round(atk*overMult);def=Math.round(def*overMult);hp=Math.round(hp*overMult);
+      team.push({...d,atk,def,hp,maxHp:hp,
+        star:heroStar,uid:'el'+i,isE:true,crit,cdmg:+((d.cdmg||1.5)+eqCdmg).toFixed(2),cdLeft:0,
+        pos:{row,idx:row==='front'?fCnt-1:i-fCnt},
+        stun:0,bleed:0,atkBuff:0,atkBuffTurns:0,defBuff:0,defBuffTurns:0,defBuff2:0,
+        skOn:false,kangwaUsed:false,revived:false,charmed:0,
+        arenaEq:eqList,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,
+        relic:hasRelic,_relicId:relicId,_rank:heroRank,
+        debuffImmune:hid==='swordsman'||hid==='xu'||hid==='ziranwupo',
+        _heroEnemy:true,_heroId:hid});
+    }else{
+      const b=mPool[ri(0,mPool.length-1)];
+      const row=(fCnt<3&&b.row==='front')?'front':'back';
+      if(row==='front')fCnt++;
+      const mStar=Math.min(20,Math.max(1,Math.floor(2+wave*0.4)));
+      const sm=Math.pow(MON_MULT,mStar-1);
+      const bossMult=1+diff*0.1;
+      team.push({...b,atk:Math.round(b.atk*sm*bossMult*overMult),def:Math.round(b.def*sm*bossMult*overMult),
+        hp:Math.round(b.hp*sm*bossMult*overMult),maxHp:Math.round(b.hp*sm*bossMult*overMult),
+        star:mStar,
+        uid:'el'+i,isE:true,crit:b.crit||5,cdmg:b.cdmg||1.5,cdLeft:0,pos:{row,idx:row==='front'?fCnt-1:i-fCnt},
+        stun:0,bleed:0,atkBuff:0,atkBuffTurns:0,defBuff:0,defBuffTurns:0,defBuff2:0,
+        charmed:0,stealth:0,skelRevived:false,skName:b.skName,skCd:b.skCd||3,
+        debuffImmune:false,
+        _heroEnemy:false});
+    }
+  }
+  return team;
+}
+
+function startEndless(){
+  const fh=G.form.filter(u=>u!==null);
+  if(!fh.length){toast('请先设置阵型！');return}
+  if(G.gold<50000){toast('金币不足！需要50,000💰');return}
+  if(!confirm('进入无尽深渊？费用50,000💰'))return;
+  G.gold-=50000;
+  // 初始化友军
+  const pMap=[{row:'back',idx:0},{row:'back',idx:1},{row:'back',idx:2},{row:'front',idx:0},{row:'front',idx:1}];
+  const allies=[];
+  G.form.forEach((uid,i)=>{
+    if(uid===null)return;const h=G.heroes.find(x=>x.uid===uid);if(!h)return;
+    const s=stats(h);
+    allies.push({...s,hp:s.hp,maxHp:s.maxHp,isE:false,pos:pMap[i],cdLeft:0,skOn:false,
+      taunt:false,tauntPerm:false,defBuff:0,atkBuff:0,atkBuffTurns:0,defBuffTurns:0,defBuff2:0,
+      stun:0,bleed:0,bleedDmg:0,poisons:[],bleeds:[],revived:false,kangwaUsed:false,
+      poison:0,poisonDmg:0,shield:0,invincible:0,silenced:0,
+      healReduce:0,healReduceAmt:0,dmgReduce:0,dmgReduceAmt:0,
+      spdReduce:0,spdReduceAmt:0,marked:0,markedBy:null,
+      armorBreak:false,extraAction:false,charmed:0,debuffImmune:s.id==='swordsman'||s.id==='xu'||s.id==='ziranwupo',
+      relic:s.relic||false,_relicId:s._relicId});
+  });
+  if(!allies.length){toast('阵型无效！');G.gold+=50000;return}
+  // Apply start passives
+  allies.forEach(a=>{
+    if(a.id==='shield')a.defBuff=a.def;
+    if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}
+    if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5);
+  });
+  if(allies.some(a=>a.hp>0&&a.id==='denglikai'))allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
+  if(allies.some(a=>a.hp>0&&a.id==='zhangjihua'))allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
+  if(allies.some(a=>a.hp>0&&a.id==='dongrab'))allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
+  if(allies.some(a=>a.hp>0&&a.id==='nttt')){const pct=allies.find(a=>a.hp>0&&a.id==='nttt').relic?0.15*1.06:0.15;allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*pct)})}
+  if(allies.some(a=>a.hp>0&&a.id==='caolaou'))allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
+  // 初始化无尽状态
+  endlessState={wave:1,allies,totalDmg:{},totalHeal:{},totalAbsorb:{}};
+  endlessState.allies.forEach(a=>{endlessState.totalDmg[a.uid]=0;endlessState.totalHeal[a.uid]=0;endlessState.totalAbsorb[a.uid]=0});
+  // 生成第1关敌人
+  startEndlessWave();
+}
+
+function startEndlessWave(){
+  const es=endlessState;if(!es)return;
+  const wave=es.wave;
+  const enemies=genEndlessEnemies(wave);
+  // 敌方英雄被动初始化
+  enemies.forEach(e=>{
+    if(e.id==='shield')e.defBuff=e.def;
+    if(e.id==='sange')e.taunt=true,e.tauntPerm=true;
+    if(e.id==='zhangxuyang')e.hp=Math.round(e.maxHp/5);
+    if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true;
+  });
+  if(enemies.some(e=>e.hp>0&&e.id==='denglikai'))enemies.forEach(e=>{e.spd+=1;e.defBuff=(e.defBuff||0)+Math.round(e.def*0.2)});
+  if(enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
+  if(enemies.some(e=>e.hp>0&&e.id==='dongrab'))enemies.filter(e=>e.pos.row==='back').forEach(e=>{e.crit+=5});
+  if(enemies.some(e=>e.hp>0&&e.id==='nttt')){const pct=enemies.find(e=>e.hp>0&&e.id==='nttt').relic?0.15*1.06:0.15;enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*pct)})}
+  if(enemies.some(e=>e.hp>0&&e.id==='caolaou'))enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.1});
+  // 怪物被动
+  const allies=es.allies;
+  if(allies.some(a=>a.hp>0&&a.id==='daxiong'))enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2});
+  if(enemies.some(e=>e.hp>0&&e.id==='daxiong'))allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=2});
+  enemies.forEach(e=>{
+    if(e.name==='刺客')e.stealth=1;
+    if(e.name==='兽王'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.06*alive);e.atkBuffTurns=99}
+    if(e.name==='魔王'){allies.forEach(a=>{a.atkBuff=(a.atkBuff||0)-Math.round(a.atk*0.15);a.spd=Math.max(1,a.spd-1)})}
+    if(e.name==='双头食人魔')e._enraged=false;
+    if(e.name==='狼人')e._enraged=false;
+    if(e.name==='石像鬼')e._gargoyleDefBuff=0;
+    if(e.name==='狼王'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;enemies.forEach(ally=>{ally.spd+=1});e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
+    if(e.name==='狼头人'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.04*alive);e.atkBuffTurns=99}
+    if(e.name==='马哥'&&enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.2);e.atkBuffTurns=99;e.spd+=1}
+    if(e.name==='堕落主教'){enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.15}})}
+    if(e.name==='法老棺椁')e._noCrit=true;
+  });
+  // 友军清战场状态但保留血量
+  allies.forEach(a=>{
+    a.cdLeft=0;a.skOn=false;a.stun=0;a.bleed=0;a.bleedDmg=0;a.poisons=[];a.bleeds=[];
+    a.poison=0;a.poisonDmg=0;a.shield=0;a.invincible=0;a.silenced=0;
+    a.atkBuff=0;a.atkBuffTurns=0;a.defBuff=0;a.defBuffTurns=0;a.defBuff2=0;
+    a.healReduce=0;a.healReduceAmt=0;a.dmgReduce=0;a.dmgReduceAmt=0;
+    a.spdReduce=0;a.spdReduceAmt=0;a.marked=0;a.markedBy=null;
+    a.armorBreak=false;a.extraAction=false;a.charmed=0;a.revived=false;a.kangwaUsed=false;
+    // 重新应用永久被动
+    if(a.id==='shield')a.defBuff=a.def;
+    if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}
+  });
+  B={allies,enemies,round:1,order:[],lv:-1,isEndless:true,log:[],done:false,
+    shieldFirst:true,busy:false,paused:false,stats:{}};
+  syncBattleUI();showScreen('battle');buildOrder();renderB();
+  B.log.push(`<b style="color:#ff6600">🌀 无尽深渊 · 第 ${wave} 关</b>`);
+  B.log.push(`<b style="color:var(--gold)">── 回合 1 ──</b>`);
+  renderB();
+  runBattle();
+}
+
+function endEndlessWave(vic){
+  const es=endlessState;if(!es)return;
+  // 累积本关战斗统计到总统计
+  if(B&&B.stats){
+    B.allies.forEach(u=>{
+      const st=B.stats[u.uid]||{dmg:0,absorb:0,heal:0};
+      es.totalDmg[u.uid]=(es.totalDmg[u.uid]||0)+st.dmg;
+      es.totalAbsorb[u.uid]=(es.totalAbsorb[u.uid]||0)+st.absorb;
+      es.totalHeal[u.uid]=(es.totalHeal[u.uid]||0)+st.heal;
+    });
+  }
+  if(!vic){
+    // 失败：随机播放战败音乐，不结算
+    stopBGM();
+    const loseEl=Math.random()<0.5?document.getElementById('sfxEndlessLose1'):document.getElementById('sfxEndlessLose2');
+    if(loseEl){loseEl.currentTime=0;loseEl.play().catch(()=>{})}
+    G.endlessLast=es.wave-1;
+    if(!G.endlessBest||es.wave-1>G.endlessBest)G.endlessBest=es.wave-1;
+    let rewHtml=`<div class="ri" style="color:#ff6600">🌀 无尽深渊 · 败北</div>`;
+    rewHtml+=`<div class="ri" style="color:var(--red)">止步于第 ${es.wave} 关</div>`;
+    rewHtml+=`<div class="ri" style="color:var(--text2)">失败不结算奖励</div>`;
+    document.getElementById('resRew').innerHTML=rewHtml;
+    document.getElementById('resCloseBtn').style.display='';
+    endlessState=null;
+    checkEndlessAch(es.wave-1);
+    return;
+  }
+  // 胜利：所有角色回复20%血量
+  es.allies.forEach(a=>{
+    const heal=Math.round(a.maxHp*0.2);
+    a.hp=Math.min(a.maxHp,a.hp+heal);
+  });
+  // 播放无尽胜利音乐
+  stopBGM();
+  const winEl=document.getElementById('sfxEndlessWin');
+  if(winEl){winEl.currentTime=0;winEl.play().catch(()=>{})}
+  // 显示中间结算界面（继续/退出选择）
+  showEndlessInterim();
+}
+
+function showEndlessInterim(){
+  const es=endlessState;if(!es)return;
+  document.getElementById('resCloseBtn').style.display='none'; // 隐藏默认确定按钮
+  const box=document.getElementById('resBox');
+  box.className='res-box vic';
+  document.getElementById('resTitle').textContent=`第 ${es.wave} 关 通过！`;
+  let html=`<div class="ri" style="color:#ff6600">🌀 无尽深渊 · 第 ${es.wave} 关胜利</div>`;
+  html+=`<div class="ri" style="color:var(--green)">所有角色已回复20%血量</div>`;
+  html+=`<div style="margin:8px 0;font-size:12px;color:var(--text2)">── 英雄状态 ──</div>`;
+  es.allies.forEach(a=>{
+    const pct=Math.round(a.hp/a.maxHp*100);
+    const col=pct>60?'var(--green)':pct>30?'#f39c12':'var(--red)';
+    html+=`<div class="ri">${a.name} <span style="color:${col}">${a.hp}/${a.maxHp} (${pct}%)</span></div>`;
+  });
+  html+=`<div style="margin:10px 0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">`;
+  html+=`<button class="med-btn" style="background:linear-gradient(135deg,#ff6600,#ff3300);padding:8px 20px" onclick="continueEndless()">🌀 继续挑战</button>`;
+  html+=`<button class="med-btn" style="background:linear-gradient(135deg,#2ecc71,#27ae60);padding:8px 20px" onclick="exitEndless()">💰 退出结算</button>`;
+  html+=`</div>`;
+  document.getElementById('resRew').innerHTML=html;
+  document.getElementById('resOv').classList.add('show');
+  renderBattleStats();
+}
+
+function continueEndless(){
+  const es=endlessState;if(!es)return;
+  document.getElementById('resCloseBtn').style.display='';
+  document.getElementById('resOv').classList.remove('show');
+  es.wave++;
+  // 清理B，但不设null（startEndlessWave会重新创建）
+  B=null;
+  startEndlessWave();
+}
+
+function exitEndless(){
+  const es=endlessState;if(!es)return;
+  const cleared=es.wave; // 当前关已过
+  G.endlessLast=cleared;
+  if(!G.endlessBest||cleared>G.endlessBest)G.endlessBest=cleared;
+  // 结算奖励
+  let rewHtml=`<div class="ri" style="color:#ff6600">🌀 无尽深渊结算</div>`;
+  rewHtml+=`<div class="ri" style="color:var(--gold)">通关 ${cleared} 关</div>`;
+  // 金币奖励：基础+每关递增
+  const goldBase=5000+cleared*2000;
+  G.gold+=goldBase;
+  rewHtml+=`<div class="ri">💰 金币 +${goldBase}</div>`;
+  // 每过3关给一个英雄
+  if(cleared>=3){
+    const heroCount=Math.floor(cleared/3);
+    for(let i=0;i<Math.min(heroCount,5);i++){
+      const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
+      const star=ri(Math.min(6,Math.floor(cleared/4)),Math.min(6,3+Math.floor(cleared/5)));
+      const uid=G.uid++;
+      addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:0});
+      rewHtml+=`<div class="ri" style="color:#9b59b6">🃏 获得 ${H[hid].name} ${'★'.repeat(star)}</div>`;
+    }
+  }
+  // 每过4关给一个装备
+  if(cleared>=4){
+    const eqCount=Math.floor(cleared/4);
+    for(let i=0;i<Math.min(eqCount,5);i++){
+      const eqKeys=Object.keys(EQ),eid=eqKeys[ri(0,eqKeys.length-1)];
+      const eqStar=ri(Math.min(6,Math.floor(cleared/5)),Math.min(6,2+Math.floor(cleared/6)));
+      const eqUid=G.eqUid++;
+      addEquip({id:eid,star:eqStar,uid:eqUid});
+      rewHtml+=`<div class="ri">🔧 获得 ${EQ[eid].name} ${'★'.repeat(eqStar)}</div>`;
+    }
+  }
+  // 每过7关给圣遗物
+  if(cleared>=7){
+    const relicCount=Math.floor(cleared/7);
+    const rKeys=Object.keys(RELICS);
+    for(let i=0;i<Math.min(relicCount,3);i++){
+      const rid=rKeys[ri(0,rKeys.length-1)];
+      const rs=ri(Math.min(4,Math.floor(cleared/6)),Math.min(6,2+Math.floor(cleared/8)));
+      const rUid=G.relicUid++;
+      addRelic({id:rid,star:rs,uid:rUid});
+      rewHtml+=`<div class="ri" style="color:#9b59b6">🔮 获得 ${RELICS[rid].name} ${'★'.repeat(rs)}</div>`;
+    }
+  }
+  // 高关奖励：10关以上额外
+  if(cleared>=10){
+    const bonus=Math.round(cleared*1000);
+    G.gold+=bonus;
+    rewHtml+=`<div class="ri" style="color:#f1c40f">🏆 深渊挑战奖励 +${bonus}💰</div>`;
+  }
+  if(cleared>=15){
+    const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
+    addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:0});
+    rewHtml+=`<div class="ri" style="color:var(--gold)">👑 15关里程碑！${H[hid].name} ★★★★★★</div>`;
+  }
+  // 输出统计
+  rewHtml+=`<div style="margin:10px 0;font-size:12px;color:var(--text2)">── 总输出统计 ──</div>`;
+  es.allies.forEach(a=>{
+    const dmg=es.totalDmg[a.uid]||0;
+    const abs=es.totalAbsorb[a.uid]||0;
+    const heal=es.totalHeal[a.uid]||0;
+    if(dmg+abs+heal>0)rewHtml+=`<div class="ri">${a.name} — 伤害:<span style="color:#e74c3c">${formatDmg(dmg)}</span> 承伤:<span style="color:#3498db">${formatDmg(abs)}</span> 治疗:<span style="color:#2ecc71">${formatDmg(heal)}</span></div>`;
+  });
+  document.getElementById('resRew').innerHTML=rewHtml;
+  document.getElementById('resCloseBtn').style.display='';
+  endlessState=null;
+  checkEndlessAch(cleared);
+}
+
+function checkEndlessAch(cleared){
+  if(!G.achievements)G.achievements={};
+  let changed=false;
+  changed=_ach('endless5',cleared>=5)||changed;
+  changed=_ach('endless10',cleared>=10)||changed;
+  changed=_ach('endless15',cleared>=15)||changed;
+  changed=_ach('endless20',cleared>=20)||changed;
+  if(changed)saveGame();
+}
+
 // ============= SHOP TIMER & INCOME TIMER =============
 setInterval(()=>{
   // Auto shop refresh
@@ -9116,7 +9536,8 @@ function saveGame(){
     advChapter:G.advChapter,
     arena:G.arena,shop:G.shop,realm:G.realm,tickets:G.tickets,
     challengeCleared:G.challengeCleared,achievements:G.achievements,
-    seenEq:G.seenEq,seenHero:G.seenHero,worldBoss:G.worldBoss
+    seenEq:G.seenEq,seenHero:G.seenHero,worldBoss:G.worldBoss,
+    endlessBest:G.endlessBest||0,endlessLast:G.endlessLast||0
   }};
   putSaves(saves);
 }
@@ -9136,6 +9557,7 @@ function loadGame(slot){
   G.achievements=d.achievements||{};
   G.seenEq=d.seenEq||[];G.seenHero=d.seenHero||[];G.seenRelic=d.seenRelic||[];
   G.worldBoss=d.worldBoss||null; // World boss state will be lazy-initialized by getWBState()
+  G.endlessBest=d.endlessBest||0;G.endlessLast=d.endlessLast||0;
   syncSeen(); // 补全旧存档的收集记录
   G._user=saves[slot].user;G._slot=slot;
   return true;
