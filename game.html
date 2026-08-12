@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="我的战争">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="图标.jpg">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <title>MyWar - 战斗游戏</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1337,13 +1338,10 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
 
 <!-- 局域网联机对战 -->
 <div id="screen-onlinepvp" class="screen" style="padding:15px;align-items:center;overflow-y:auto">
-  <div class="med-title" style="color:#3498db;text-shadow:0 0 15px rgba(52,152,219,.5),0 2px 4px rgba(0,0,0,.6)">🌐 局域网对战</div>
-  <div style="font-size:12px;color:var(--text2);margin-bottom:16px">同一WiFi下 · 用自己的阵容对战 · 手机/电脑/iPad互斗</div>
+  <div class="med-title" style="color:#3498db;text-shadow:0 0 15px rgba(52,152,219,.5),0 2px 4px rgba(0,0,0,.6)">🌐 联机对战</div>
+  <div style="font-size:12px;color:var(--text2);margin-bottom:16px">无需本地服务器 · 用自己的阵容对战 · 手机/电脑/iPad互斗</div>
   
   <div id="olLobby" style="text-align:center;width:100%;max-width:400px">
-    <div id="olServerStatus" style="background:linear-gradient(135deg,#1a2a4a,#0a1a2a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">
-      <span style="color:var(--text2)">服务器状态：</span><span id="olServerCheck" style="color:#f39c12">检测中...</span>
-    </div>
     <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
       <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 创建房间</button>
     </div>
@@ -1351,11 +1349,6 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
     <div style="display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:12px">
       <input id="olJoinCode" type="text" placeholder="房间号" maxlength="4" style="width:100px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:18px;text-align:center;letter-spacing:4px">
       <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:10px 20px;font-size:14px" onclick="olJoinRoom()">加入</button>
-    </div>
-    <div id="olJoinIpHint" style="display:none;margin-top:8px">
-      <div style="font-size:11px;color:#e67e22;margin-bottom:4px">连接失败？请手动输入房主IP：</div>
-      <input id="olJoinIp" type="text" placeholder="192.168.x.x" style="width:150px;padding:6px 10px;background:#1a152e;color:#e8dcc8;border:2px solid #e67e22;border-radius:6px;font-size:13px;text-align:center">
-      <button class="med-btn" style="margin-left:4px;padding:6px 12px;font-size:12px;background:#e67e22" onclick="olJoinRoomManual()">重试</button>
     </div>
     <div style="margin-top:16px;font-size:10px;color:#666;line-height:1.6;text-align:center">
       双方使用自己的存档阵容对决<br>
@@ -1370,7 +1363,7 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
       <div id="olRoomStatus" style="font-size:12px;color:#2ecc71">等待对手加入...</div>
     </div>
     <div id="olMyIp" style="background:linear-gradient(135deg,#1a1a2e,#0a0a1a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;cursor:pointer" onclick="olCopyIp()" title="点击复制">
-      <div style="color:var(--text2);margin-bottom:4px">把房间号告诉对手即可（点击复制）</div>
+      <div style="color:var(--text2);margin-bottom:4px">把房间号告诉对手，对手输入即可加入（点击复制）</div>
       <div id="olIpText" style="color:#3498db;font-size:14px;font-weight:bold;word-break:break-all"></div>
     </div>
     <button class="med-btn" style="background:linear-gradient(180deg,#c0392b,#96281b);padding:8px 20px" onclick="olLeaveRoom()">离开房间</button>
@@ -6995,8 +6988,8 @@ function endBattle(vic){
     // 联机对战结算
     const winner=olRole==='host'?(vic?'host':'client'):(vic?'client':'host');
     // 房主发送战斗结束给对手
-    if(olWs&&olWs.readyState===1){
-      olWs.send(JSON.stringify({type:'battle_end',winner}));
+    if(olConn&&olConn.open){
+      olSend({type:'battle_end',winner});
     }
     // 清理发送定时器
     if(B._olSendInterval)clearInterval(B._olSendInterval);
@@ -9827,8 +9820,9 @@ function endPvpBattle(vic){
   document.getElementById('resRew').innerHTML=`<div class="ri" style="font-size:18px;color:var(--gold)">骑士 ${player===1?'I':'II'} 获胜！</div><div style="font-size:12px;color:var(--text2)">竞技决斗，无奖励</div>`;
 }
 
-// ============= ONLINE PVP (LAN) =============
-let olWs=null; // WebSocket连接
+// ============= ONLINE PVP (PeerJS - 无需本地服务器) =============
+let olPeer=null; // PeerJS实例
+let olConn=null; // 数据连接
 let olRole=null; // 'host' | 'client'
 let olRoomCode=null;
 let olMyData=null; // {heroes,equips,form,eqAssign}
@@ -9837,48 +9831,11 @@ let olMyConfirmed=false;
 let olOpponentConfirmed=false;
 let olSelectedHeroUid=null;
 
-// 一键复制IP+房间号
+// 一键复制房间号
 function olCopyIp(){
-  const el=document.getElementById('olIpText');
-  if(!el)return;
-  const text=el.textContent;
-  navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板！')).catch(()=>toast('复制失败，请手动复制'));
-}
-
-// 检测WS服务器是否在线
-function olCheckServer(){
-  const checkEl=document.getElementById('olServerCheck');
-  if(!checkEl)return;
-  // 非本地网络（github.io等）无法检测本地WS服务器
-  const isLocal=location.hostname==='localhost'||location.hostname==='127.0.0.1'||/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname)&&location.hostname.startsWith('192.168.');
-  if(!isLocal){
-    checkEl.innerHTML='📱 远程设备 — 请选择「加入房间」并输入房主电脑IP';
-    checkEl.style.color='#3498db';
-    return;
-  }
-  const host=location.hostname||'localhost';
-  const wsUrl='ws://'+host+':8766';
-  try{
-    const testWs=new WebSocket(wsUrl);
-    let done=false;
-    testWs.onopen=()=>{
-      if(done)return;done=true;
-      checkEl.textContent='✅ 在线';
-      checkEl.style.color='#2ecc71';
-      testWs.close();
-    };
-    testWs.onerror=()=>{
-      if(done)return;done=true;
-      checkEl.textContent='❌ 离线（需在电脑上启动游戏）';
-      checkEl.style.color='#e74c3c';
-    };
-    setTimeout(()=>{
-      if(!done){done=true;testWs.close();checkEl.textContent='⏱ 超时';checkEl.style.color='#e67e22'}
-    },3000);
-  }catch(e){
-    checkEl.textContent='❌ 不可用';
-    checkEl.style.color='#e74c3c';
-  }
+  const code=document.getElementById('olRoomCode');
+  if(!code)return;
+  navigator.clipboard.writeText(code.textContent).then(()=>toast('已复制房间号！')).catch(()=>toast('复制失败'));
 }
 
 function rOnlinePvp(){
@@ -9887,145 +9844,170 @@ function rOnlinePvp(){
   document.getElementById('olRoom').style.display='none';
   document.getElementById('olSetup').style.display='none';
   document.getElementById('olBattle').style.display='none';
-  const ipHint=document.getElementById('olJoinIpHint');
-  if(ipHint)ipHint.style.display='none';
-  document.getElementById('olMyIp').textContent='';
-  // 检测服务器
-  olCheckServer();
-  // 平台提示
-  const hintEl=document.getElementById('olPlatformHint');
-  if(hintEl){
-    const isMobile='ontouchstart' in window||navigator.maxTouchPoints>0;
-    hintEl.textContent=isMobile?'手机端选择「加入」，输入房间号即可':'电脑端启动游戏即自动开启联机服务';
+}
+
+function olSend(msg){
+  if(olConn&&olConn.open){
+    olConn.send(JSON.stringify(msg));
   }
+}
+
+function olCleanup(){
+  // 关闭PeerJS连接和实例
+  if(olConn){try{olConn.close()}catch(e){}olConn=null}
+  if(olPeer){try{olPeer.destroy()}catch(e){}olPeer=null}
+  olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
+  olMyConfirmed=false;olOpponentConfirmed=false;olSelectedHeroUid=null;
 }
 
 function olCreateRoom(){
   const code=String(ri(1000,9999));
-  // 自动用当前页面hostname作为WS地址
-  const wsUrl='ws://'+location.hostname+':8766';
-  olConnect(wsUrl,code,'host');
+  olRoomCode=code;
+  olRole='host';
+  olMyConfirmed=false;
+  olOpponentConfirmed=false;
+  toast('正在创建房间...');
+  
+  // 创建PeerJS实例，ID=房间号前缀+随机码，确保唯一
+  const peerId='mywar-room-'+code;
+  olPeer=new Peer(peerId,{
+    config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
+  });
+  
+  olPeer.on('open',()=>{
+    // 房间创建成功
+    document.getElementById('olLobby').style.display='none';
+    document.getElementById('olRoom').style.display='';
+    document.getElementById('olRoomCode').textContent=code;
+    document.getElementById('olRoomStatus').textContent='等待对手加入...';
+    document.getElementById('olRoomStatus').style.color='#2ecc71';
+    document.getElementById('olIpText').textContent='房间号: '+code;
+    toast('房间已创建！告诉对手房间号即可');
+  });
+  
+  olPeer.on('connection',conn=>{
+    // 有人连入
+    olConn=conn;
+    olSetupConn(conn);
+    toast('对手已加入！');
+    document.getElementById('olRoomStatus').textContent='对手已加入！准备布阵...';
+    document.getElementById('olRoomStatus').style.color='#2ecc71';
+    // 生成我的队伍数据并进入布阵
+    olGenerateMyData();
+    olSend({type:'setup',data:olMyData,confirmed:false});
+    setTimeout(()=>olShowSetup(),500);
+  });
+  
+  olPeer.on('error',err=>{
+    console.error('PeerJS error',err);
+    if(err.type==='unavailable-id'){
+      toast('房间号已存在，请重试');
+    }else{
+      toast('连接错误: '+err.type);
+    }
+    olCleanup();
+  });
+  
+  olPeer.on('disconnected',()=>{
+    toast('信令服务器断开');
+  });
 }
 
 function olJoinRoom(){
   const code=document.getElementById('olJoinCode').value.trim();
   if(!code){toast('请输入房间号');return}
-  // 自动用当前页面hostname（同WiFi下就是房主IP）
-  const wsUrl='ws://'+location.hostname+':8766';
-  olConnect(wsUrl,code,'client');
-}
-
-function olJoinRoomManual(){
-  const code=document.getElementById('olJoinCode').value.trim();
-  const ip=document.getElementById('olJoinIp').value.trim();
-  if(!code){toast('请输入房间号');return}
-  if(!ip){toast('请输入房主IP');return}
-  const wsUrl='ws://'+ip+':8766';
-  olConnect(wsUrl,code,'client');
-}
-
-function olConnect(wsUrl,code,role){
-  toast('连接中...');
-  const ws=new WebSocket(wsUrl);
-  olWs=ws;
-  olRole=role;
   olRoomCode=code;
+  olRole='client';
   olMyConfirmed=false;
   olOpponentConfirmed=false;
+  toast('正在连接...');
   
-  ws.onopen=()=>{
-    if(role==='host'){
-      ws.send(JSON.stringify({type:'create',code}));
+  const peerId='mywar-room-'+code;
+  olPeer=new Peer({
+    config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
+  });
+  
+  olPeer.on('open',()=>{
+    // 连接到房主
+    const conn=olPeer.connect(peerId,{reliable:true});
+    olConn=conn;
+    olSetupConn(conn);
+  });
+  
+  olPeer.on('error',err=>{
+    console.error('PeerJS error',err);
+    if(err.type==='peer-unavailable'){
+      toast('房间不存在，请检查房间号');
+    }else if(err.type==='network'){
+      toast('网络错误，请检查网络连接');
     }else{
-      ws.send(JSON.stringify({type:'join',code}));
+      toast('连接错误: '+err.type);
     }
-  };
+    olCleanup();
+  });
   
-  ws.onmessage=(e)=>{
+  olPeer.on('disconnected',()=>{
+    toast('信令服务器断开');
+  });
+}
+
+function olSetupConn(conn){
+  conn.on('open',()=>{
+    if(olRole==='client'){
+      toast('成功加入房间！');
+      olGenerateMyData();
+      olSend({type:'setup',data:olMyData,confirmed:false});
+      olShowSetup();
+    }
+  });
+  
+  conn.on('data',raw=>{
     try{
-      const msg=JSON.parse(e.data);
+      const msg=JSON.parse(raw);
       olHandleMsg(msg);
     }catch(err){console.error('OL msg error',err)}
-  };
+  });
   
-  ws.onclose=()=>{
+  conn.on('close',()=>{
     toast('连接已断开');
-    olWs=null;
-    // 断线后回大厅
-    olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
-    olMyConfirmed=false;olOpponentConfirmed=false;
+    olCleanup();
     rOnlinePvp();
-  };
-  
-  ws.onerror=()=>{
-    toast('连接失败');
-    olWs=null;
-    olRole=null;olRoomCode=null;
-    // 显示手动输入IP的选项
-    const hint=document.getElementById('olJoinIpHint');
-    if(hint)hint.style.display='';
-    rOnlinePvp();
-  };
+  });
 }
 
 function olHandleMsg(msg){
   const mtype=msg.type;
   
-  if(mtype==='created'){
-    document.getElementById('olLobby').style.display='none';
-    document.getElementById('olRoom').style.display='';
-    document.getElementById('olRoomCode').textContent=msg.code||olRoomCode;
-    document.getElementById('olRoomStatus').textContent='等待对手加入...';
-    const hostIp=msg.host_ip||location.hostname;
-    const codeStr=msg.code||olRoomCode;
-    document.getElementById('olIpText').textContent=`IP: ${hostIp}  房间号: ${codeStr}`;
-    toast('房间已创建');
-  }
-  
-  else if(mtype==='joined'){
-    toast('成功加入房间！');
-    // 生成我的队伍数据
-    olGenerateMyData();
-    // 通知对方我的数据
-    olWs.send(JSON.stringify({type:'setup',data:olMyData,confirmed:false}));
-    // 切换到布阵界面
-    olShowSetup();
-  }
-  
-  else if(mtype==='opponent_joined'){
-    toast('对手已加入！');
-    document.getElementById('olRoomStatus').textContent='对手已加入！准备布阵...';
-    document.getElementById('olRoomStatus').style.color='#2ecc71';
-    // 生成我的队伍数据
-    olGenerateMyData();
-    // 发送我的数据给对方
-    olWs.send(JSON.stringify({type:'setup',data:olMyData,confirmed:false}));
-    // 稍等后进入布阵
-    setTimeout(()=>olShowSetup(),500);
-  }
-  
-  else if(mtype==='setup'){
+  if(mtype==='setup'){
     // 收到对方的布阵数据
-    if(msg.from!==olRole){
-      olOpponentData=msg.data;
-      olOpponentConfirmed=msg.confirmed||false;
-      if(olOpponentConfirmed){
-        document.getElementById('olOpponentConfirmed').textContent='⚠ 对手已确认布阵';
-        document.getElementById('olOpponentConfirmed').style.color='#e67e22';
-      }else{
-        document.getElementById('olOpponentConfirmed').textContent='';
-      }
+    olOpponentData=msg.data;
+    olOpponentConfirmed=msg.confirmed||false;
+    if(olOpponentConfirmed){
+      document.getElementById('olOpponentConfirmed').textContent='⚠ 对手已确认布阵';
+      document.getElementById('olOpponentConfirmed').style.color='#e67e22';
+    }else{
+      document.getElementById('olOpponentConfirmed').textContent='';
+    }
+  }
+  
+  else if(mtype==='confirmed'){
+    // 对手确认了布阵
+    olOpponentConfirmed=true;
+    document.getElementById('olOpponentConfirmed').textContent='⚠ 对手已确认布阵';
+    document.getElementById('olOpponentConfirmed').style.color='#e67e22';
+    // 如果我也已确认，且我是房主，则开战
+    if(olMyConfirmed&&olRole==='host'){
+      olSend({type:'battle_start',opponent_data:olMyData});
+      olStartBattle();
     }
   }
   
   else if(mtype==='battle_start'){
-    // 收到对方完整布阵数据，开战！
     olOpponentData=msg.opponent_data;
     olStartBattle();
   }
   
   else if(mtype==='battle_log'){
-    // 客户端收到房主的战斗日志
     if(olRole==='client'){
       const logDiv=document.getElementById('olBattleLog');
       const entries=msg.log.split('<br>');
@@ -10033,7 +10015,6 @@ function olHandleMsg(msg){
         if(!entry)return;
         const span=document.createElement('div');
         span.style.cssText='padding:2px 0;border-bottom:1px solid #1a1a2e';
-        // 格式化关键字高亮
         let html=entry;
         html=html.replace(/(回合 \d+)/g,'<b style="color:#f39c12">$1</b>');
         html=html.replace(/(暴击| crit)/gi,'<span style="color:#e74c3c;font-weight:bold">$1</span>');
@@ -10059,10 +10040,7 @@ function olHandleMsg(msg){
   
   else if(mtype==='opponent_disconnected'){
     toast('对手已断开连接');
-    // 对手断线，回到大厅
-    olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
-    olMyConfirmed=false;olOpponentConfirmed=false;
-    if(olWs){olWs.close();olWs=null}
+    olCleanup();
     rOnlinePvp();
   }
   
@@ -10248,8 +10226,7 @@ function olToggleEquipForSlot(slotIdx){
 }
 
 function olSyncSetup(){
-  if(!olWs||olWs.readyState!==1)return;
-  olWs.send(JSON.stringify({type:'setup',data:olMyData,confirmed:olMyConfirmed}));
+  olSend({type:'setup',data:olMyData,confirmed:olMyConfirmed});
 }
 
 function olConfirmSetup(){
@@ -10260,9 +10237,12 @@ function olConfirmSetup(){
   document.getElementById('olSetupStatus').textContent='✅ 已确认，等待对手...';
   document.getElementById('olSetupStatus').style.color='#2ecc71';
   olSyncSetup();
-  // 通知服务器检查双方是否都确认
-  if(olWs&&olWs.readyState===1){
-    olWs.send(JSON.stringify({type:'start_check'}));
+  // P2P模式：通知对方我已确认，对方检查双方都确认后触发战斗
+  olSend({type:'confirmed'});
+  // 如果对手也已确认，房主直接开战
+  if(olOpponentConfirmed&&olRole==='host'){
+    olSend({type:'battle_start',opponent_data:olMyData});
+    olStartBattle();
   }
 }
 
@@ -10360,8 +10340,8 @@ function olRunHostBattle(){
   // 定时发送日志给客户端
   B._olSendInterval=setInterval(()=>{
     if(!B||B.done){clearInterval(B._olSendInterval);return}
-    if(B._olLogBuffer.length>0&&olWs&&olWs.readyState===1){
-      olWs.send(JSON.stringify({type:'battle_log',log:B._olLogBuffer.join('<br>'),round:B.round}));
+    if(B._olLogBuffer.length>0){
+      olSend({type:'battle_log',log:B._olLogBuffer.join('<br>'),round:B.round});
       B._olLogBuffer=[];
     }
   },500);
@@ -10370,16 +10350,16 @@ function olRunHostBattle(){
 }
 
 function olLeaveRoom(){
-  if(olWs){olWs.close();olWs=null}
-  olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
-  olMyConfirmed=false;olOpponentConfirmed=false;
+  // 通知对手自己离开
+  olSend({type:'opponent_disconnected'});
+  olCleanup();
   rOnlinePvp();
 }
 
-// 心跳保活
+// 心跳保活（PeerJS不需要频繁心跳，但保持连接活跃）
 setInterval(()=>{
-  if(olWs&&olWs.readyState===1){
-    olWs.send(JSON.stringify({type:'ping'}));
+  if(olConn&&olConn.open){
+    olSend({type:'ping'});
   }
 },30000);
 
