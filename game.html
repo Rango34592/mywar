@@ -9851,6 +9851,24 @@ let olMyConfirmed=false;
 let olOpponentConfirmed=false;
 let olSelectedHeroUid=null;
 let olServerMode='local'; // 'local' | 'cloud'
+let olReconnectCount=0; // 重连计数
+let olMaxReconnect=5; // 最大重连次数
+
+// ICE服务器配置（含国内STUN+TURN中继）
+function olGetIceServers(){
+  return {iceServers:[
+    // 国内STUN服务器
+    {urls:'stun:stun.qq.com:3478'},
+    {urls:'stun:stun.chat.bilibili.com:3478'},
+    // Google STUN（备用，国内可能不通）
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    // 免费TURN中继（NAT穿透失败时走中继转发）
+    {urls:'turn:openrelay.metered.ca:80',username:'openrelay1',credential:'openrelay1'},
+    {urls:'turn:openrelay.metered.ca:443',username:'openrelay1',credential:'openrelay1'},
+    {urls:'turns:openrelay.metered.ca:443',username:'openrelay1',credential:'openrelay1'}
+  ]};
+}
 
 // 切换服务器模式
 function olSetMode(mode){
@@ -9875,9 +9893,9 @@ function olSetMode(mode){
 // 获取PeerJS连接配置
 function olGetPeerConfig(){
   if(olServerMode==='cloud'){
-    return {host:'0.peerjs.com',port:443,path:'/',secure:true};
+    return {host:'0.peerjs.com',port:443,path:'/',secure:true,config:olGetIceServers()};
   }
-  return {host:olGetHost(),port:olGetPort(),path:'/mywar',secure:false};
+  return {host:olGetHost(),port:olGetPort(),path:'/mywar',secure:false,config:olGetIceServers()};
 }
 
 // 获取信令服务器地址
@@ -9952,6 +9970,7 @@ function olCleanup(){
   if(olPeer){try{olPeer.destroy()}catch(e){}olPeer=null}
   olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
   olMyConfirmed=false;olOpponentConfirmed=false;olSelectedHeroUid=null;
+  olReconnectCount=0;
 }
 
 function olCreateRoom(){
@@ -9967,8 +9986,7 @@ function olCreateRoom(){
   const svrLabel=olServerMode==='cloud'?'云服务器':olGetHost()+':'+olGetPort();
   
   olPeer=new Peer(peerId,{
-    ...peerCfg,
-    config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
+    ...peerCfg
   });
   
   // 连接超时检测
@@ -9981,6 +9999,7 @@ function olCreateRoom(){
   
   olPeer.on('open',()=>{
     clearTimeout(openTimer);
+    olReconnectCount=0; // 连接成功，重置重连计数
     document.getElementById('olLobby').style.display='none';
     document.getElementById('olRoom').style.display='';
     document.getElementById('olRoomCode').textContent=code;
@@ -10015,10 +10034,16 @@ function olCreateRoom(){
   });
   
   olPeer.on('disconnected',()=>{
-    // 尝试自动重连
-    if(olPeer&&!olPeer.destroyed){
-      toast('信令断开，尝试重连...');
-      setTimeout(()=>{if(olPeer&&!olPeer.destroyed)olPeer.reconnect()},2000);
+    // 退避重连：2s,4s,8s,16s,30s，最多5次
+    if(olPeer&&!olPeer.destroyed&&olReconnectCount<olMaxReconnect){
+      olReconnectCount++;
+      const delay=Math.min(2000*Math.pow(2,olReconnectCount-1),30000);
+      if(olReconnectCount===1)toast('信令断开，'+(delay/1000)+'秒后重连('+olReconnectCount+'/'+olMaxReconnect+')...');
+      console.log('[联机] 信令断开，'+delay+'ms后第'+olReconnectCount+'次重连');
+      setTimeout(()=>{if(olPeer&&!olPeer.destroyed)olPeer.reconnect()},delay);
+    }else if(olReconnectCount>=olMaxReconnect){
+      toast('重连'+olMaxReconnect+'次仍失败，请检查网络或切换服务器模式');
+      olCleanup();
     }
   });
 }
@@ -10037,8 +10062,23 @@ function olJoinRoom(){
   const svrLabel=olServerMode==='cloud'?'云服务器':olGetHost()+':'+olGetPort();
   
   olPeer=new Peer({
-    ...peerCfg,
-    config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
+    ...peerCfg
+  });
+  
+  // 连接超时检测
+  const openTimer=setTimeout(()=>{
+    if(olPeer&&!olPeer.destroyed){
+      toast(olServerMode==='cloud'?'连接云服务器超时，请检查网络':'连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.同一WiFi');
+      olCleanup();
+    }
+  },olServerMode==='cloud'?12000:8000);
+  
+  olPeer.on('open',()=>{
+    clearTimeout(openTimer);
+    olReconnectCount=0; // 连接成功，重置重连计数
+    const conn=olPeer.connect(peerId,{reliable:true});
+    olConn=conn;
+    olSetupConn(conn);
   });
   
   // 连接超时检测
@@ -10070,9 +10110,16 @@ function olJoinRoom(){
   });
   
   olPeer.on('disconnected',()=>{
-    if(olPeer&&!olPeer.destroyed){
-      toast('信令断开，尝试重连...');
-      setTimeout(()=>{if(olPeer&&!olPeer.destroyed)olPeer.reconnect()},2000);
+    // 退避重连：2s,4s,8s,16s,30s，最多5次
+    if(olPeer&&!olPeer.destroyed&&olReconnectCount<olMaxReconnect){
+      olReconnectCount++;
+      const delay=Math.min(2000*Math.pow(2,olReconnectCount-1),30000);
+      if(olReconnectCount===1)toast('信令断开，'+(delay/1000)+'秒后重连('+olReconnectCount+'/'+olMaxReconnect+')...');
+      console.log('[联机] 信令断开，'+delay+'ms后第'+olReconnectCount+'次重连');
+      setTimeout(()=>{if(olPeer&&!olPeer.destroyed)olPeer.reconnect()},delay);
+    }else if(olReconnectCount>=olMaxReconnect){
+      toast('重连'+olMaxReconnect+'次仍失败，请检查网络或切换服务器模式');
+      olCleanup();
     }
   });
 }
