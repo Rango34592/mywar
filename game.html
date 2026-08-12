@@ -1343,11 +1343,22 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
   
   <div id="olLobby" style="text-align:center;width:100%;max-width:400px">
     <div id="olSignalingConfig" style="background:linear-gradient(135deg,#1a2a4a,#0a1a2a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">
-      <div style="color:var(--text2);margin-bottom:6px">信令服务器（电脑需先运行启动脚本）</div>
-      <div style="display:flex;gap:6px;justify-content:center;align-items:center">
-        <input id="olSignalingHost" type="text" placeholder="localhost" style="width:140px;padding:6px 10px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:13px;text-align:center">
-        <span style="color:var(--text2)">:</span>
-        <input id="olSignalingPort" type="text" placeholder="9000" style="width:60px;padding:6px 8px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:13px;text-align:center">
+      <div style="color:var(--text2);margin-bottom:6px">信令服务器模式</div>
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px">
+        <button id="olModeLocal" onclick="olSetMode('local')" style="padding:6px 16px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:2px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold">📡 本地服务器</button>
+        <button id="olModeCloud" onclick="olSetMode('cloud')" style="padding:6px 16px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#888;border:2px solid #444;border-radius:6px;cursor:pointer;font-size:12px">☁️ 云服务器</button>
+      </div>
+      <div id="olLocalConfig" style="display:none">
+        <div style="color:var(--text2);margin-bottom:4px">电脑需先运行启动脚本</div>
+        <div style="display:flex;gap:6px;justify-content:center;align-items:center">
+          <input id="olSignalingHost" type="text" placeholder="localhost" style="width:140px;padding:6px 10px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:13px;text-align:center">
+          <span style="color:var(--text2)">:</span>
+          <input id="olSignalingPort" type="text" placeholder="9000" style="width:60px;padding:6px 8px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:13px;text-align:center">
+        </div>
+      </div>
+      <div id="olCloudConfig" style="display:none;text-align:center;padding:4px">
+        <div style="color:#2ecc71;font-size:11px">✓ 使用公网信令服务器，无需电脑开服务</div>
+        <div style="color:var(--text2);font-size:10px;margin-top:2px">双方都需切到「☁️云服务器」才能连上</div>
       </div>
       <div id="olSignalingHint" style="margin-top:4px;font-size:10px;color:#888"></div>
     </div>
@@ -1360,7 +1371,7 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
       <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:10px 20px;font-size:14px" onclick="olJoinRoom()">加入</button>
     </div>
     <div style="margin-top:16px;font-size:10px;color:#666;line-height:1.6;text-align:center">
-      双方使用自己的存档阵容对决<br>
+      双方使用自己的存档阵容对决，需选择相同的服务器模式<br>
       <span id="olPlatformHint"></span>
     </div>
   </div>
@@ -9839,6 +9850,35 @@ let olOpponentData=null;
 let olMyConfirmed=false;
 let olOpponentConfirmed=false;
 let olSelectedHeroUid=null;
+let olServerMode='local'; // 'local' | 'cloud'
+
+// 切换服务器模式
+function olSetMode(mode){
+  olServerMode=mode;
+  const localBtn=document.getElementById('olModeLocal');
+  const cloudBtn=document.getElementById('olModeCloud');
+  const localCfg=document.getElementById('olLocalConfig');
+  const cloudCfg=document.getElementById('olCloudConfig');
+  if(mode==='cloud'){
+    if(localBtn)localBtn.style.cssText='padding:6px 16px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#888;border:2px solid #444;border-radius:6px;cursor:pointer;font-size:12px';
+    if(cloudBtn)cloudBtn.style.cssText='padding:6px 16px;background:linear-gradient(180deg,#2a4a2a,#1a2a1a);color:#2ecc71;border:2px solid #2ecc71;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold';
+    if(localCfg)localCfg.style.display='none';
+    if(cloudCfg)cloudCfg.style.display='';
+  }else{
+    if(localBtn)localBtn.style.cssText='padding:6px 16px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:2px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold';
+    if(cloudBtn)cloudBtn.style.cssText='padding:6px 16px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);color:#888;border:2px solid #444;border-radius:6px;cursor:pointer;font-size:12px';
+    if(localCfg)localCfg.style.display='';
+    if(cloudCfg)cloudCfg.style.display='none';
+  }
+}
+
+// 获取PeerJS连接配置
+function olGetPeerConfig(){
+  if(olServerMode==='cloud'){
+    return {host:'0.peerjs.com',port:443,path:'/',secure:true};
+  }
+  return {host:olGetHost(),port:olGetPort(),path:'/mywar',secure:false};
+}
 
 // 获取信令服务器地址
 function olGetHost(){
@@ -9861,21 +9901,23 @@ function olInitSignaling(){
   const portInput=document.getElementById('olSignalingPort');
   if(!hostInput||!portInput)return;
   if(isHttps){
-    // HTTPS页面（如GitHub Pages）无法连接本地ws://服务器，必须用http://IP访问
-    hostInput.value='';
-    hostInput.placeholder='192.168.x.x';
-    if(hintEl)hintEl.innerHTML='<span style="color:#e74c3c">⚠ HTTPS页面无法联机！请改用 http://电脑WiFiIP:8765/game.html 访问（如 http://192.168.1.101:8765/game.html）</span>';
+    // HTTPS页面（GitHub Pages）自动用云服务器
+    olSetMode('cloud');
+    if(hintEl)hintEl.innerHTML='<span style="color:#2ecc71">✓ HTTPS页面已自动选择云服务器，无需电脑开服务</span>';
   }else if(isFile){
-    // APK环境：提示用户填电脑IP
+    // APK环境
+    olSetMode('local');
     hostInput.value='';
     hostInput.placeholder='192.168.x.x';
-    if(hintEl)hintEl.innerHTML='手机用户：填<strong>电脑的WiFi IP</strong>（电脑浏览器地址栏里的IP就是），电脑需先运行启动脚本';
+    if(hintEl)hintEl.innerHTML='手机用户：填<strong>电脑的WiFi IP</strong>，电脑需先运行启动脚本。或切到☁️云服务器无需电脑开服务';
   }else if(location.hostname&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
-    // 通过局域网IP访问（iPad等）
+    // 通过局域网IP访问
+    olSetMode('local');
     hostInput.value=location.hostname;
     if(hintEl)hintEl.textContent='已自动填入当前服务器地址';
   }else{
     // localhost访问
+    olSetMode('local');
     hostInput.value='localhost';
     if(hintEl)hintEl.textContent='电脑本地：已自动填入localhost';
   }
@@ -9913,34 +9955,29 @@ function olCleanup(){
 }
 
 function olCreateRoom(){
-  if(location.protocol==='https:'){toast('HTTPS页面无法联机，请用 http://电脑IP:8765/game.html 访问');return}
   const code=String(ri(1000,9999));
   olRoomCode=code;
   olRole='host';
   olMyConfirmed=false;
   olOpponentConfirmed=false;
-  toast('正在创建房间...');
+  toast(olServerMode==='cloud'?'正在连接云服务器...':'正在创建房间...');
   
   const peerId='mywar-room-'+code;
-  const olHost=olGetHost();
-  const olPort=olGetPort();
-  const isFile=location.protocol==='file:';
+  const peerCfg=olGetPeerConfig();
+  const svrLabel=olServerMode==='cloud'?'云服务器':olGetHost()+':'+olGetPort();
   
   olPeer=new Peer(peerId,{
-    host:olHost,
-    port:olPort,
-    path:'/mywar',
-    secure:false,
+    ...peerCfg,
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
   });
   
   // 连接超时检测
   const openTimer=setTimeout(()=>{
     if(olPeer&&!olPeer.destroyed){
-      toast('连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.手机和电脑在同一WiFi');
+      toast(olServerMode==='cloud'?'连接云服务器超时，请检查网络':'连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.同一WiFi');
       olCleanup();
     }
-  },8000);
+  },olServerMode==='cloud'?12000:8000);
   
   olPeer.on('open',()=>{
     clearTimeout(openTimer);
@@ -9970,7 +10007,7 @@ function olCreateRoom(){
     if(err.type==='unavailable-id'){
       toast('房间号已存在，请重试');
     }else if(err.type==='network'||err.type==='server-error'){
-      toast('连不上信令服务器('+olHost+':'+olPort+')，请检查IP和端口');
+      toast('连不上'+svrLabel+'，请检查网络或切换服务器模式');
     }else{
       toast('连接错误: '+err.type);
     }
@@ -9989,32 +10026,28 @@ function olCreateRoom(){
 function olJoinRoom(){
   const code=document.getElementById('olJoinCode').value.trim();
   if(!code){toast('请输入房间号');return}
-  if(location.protocol==='https:'){toast('HTTPS页面无法联机，请用 http://电脑IP:8765/game.html 访问');return}
   olRoomCode=code;
   olRole='client';
   olMyConfirmed=false;
   olOpponentConfirmed=false;
-  toast('正在连接...');
+  toast(olServerMode==='cloud'?'正在连接云服务器...':'正在连接...');
   
   const peerId='mywar-room-'+code;
-  const olHost=olGetHost();
-  const olPort=olGetPort();
+  const peerCfg=olGetPeerConfig();
+  const svrLabel=olServerMode==='cloud'?'云服务器':olGetHost()+':'+olGetPort();
   
   olPeer=new Peer({
-    host:olHost,
-    port:olPort,
-    path:'/mywar',
-    secure:false,
+    ...peerCfg,
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
   });
   
   // 连接超时检测
   const openTimer=setTimeout(()=>{
     if(olPeer&&!olPeer.destroyed){
-      toast('连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.手机和电脑在同一WiFi');
+      toast(olServerMode==='cloud'?'连接云服务器超时，请检查网络':'连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.同一WiFi');
       olCleanup();
     }
-  },8000);
+  },olServerMode==='cloud'?12000:8000);
   
   olPeer.on('open',()=>{
     clearTimeout(openTimer);
@@ -10029,7 +10062,7 @@ function olJoinRoom(){
     if(err.type==='peer-unavailable'){
       toast('房间不存在，请检查房间号');
     }else if(err.type==='network'||err.type==='server-error'){
-      toast('连不上信令服务器('+olHost+':'+olPort+')，请检查IP和端口');
+      toast('连不上'+svrLabel+'，请检查网络或切换服务器模式');
     }else{
       toast('连接错误: '+err.type);
     }
