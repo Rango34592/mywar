@@ -4853,7 +4853,7 @@ async function runBattle(){
     // 牧师特殊：友军全满血时不开技能
     const actorTeam=actor.isE?B.enemies:B.allies;
     const allFullHp=actorTeam.every(u=>u.hp>=u.maxHp*0.95);
-    if(G.auto&&(!actor.isE||B.isPvp)&&actor.cdLeft<=0&&!actor.skOn){
+    if(G.auto&&(!actor.isE||B.isPvp||B.isEndless)&&actor.cdLeft<=0&&!actor.skOn){
       // 沉默检查：被沉默时不能自动开技能
       if(actor.silenced>0){
         actor.skOn=false;
@@ -4891,7 +4891,7 @@ async function runBattle(){
         usedSkill=true;
       }else if(actor.isE&&Math.random()<.5&&actor.cdLeft<=0){
         // Enemy uses power skill
-    if(H[actor.id]&&(B.isArena||B.isRealm||B.isPvp)){
+        if(H[actor.id]&&(B.isArena||B.isRealm||B.isPvp||B.isEndless)){
           actor.skOn=true;
         }
         await execSkillAnim(actor,actorAllies,actorEnemies);
@@ -5377,7 +5377,7 @@ async function execSkillAnim(actor,allies,enemies){
 
   if(actor.isE){
     // Enemy skill — arena heroes use real skill
-    if(H[actor.id]&&(B.isArena||B.isRealm||B.isPvp)){
+    if(H[actor.id]&&(B.isArena||B.isRealm||B.isPvp||B.isEndless)){
       actor.skOn=false;
       actor.cdLeft=Math.ceil((H[actor.id]?.skCd||60)/30);
       // Fall through to switch below — treat as ally skill but with swapped perspective
@@ -10082,7 +10082,7 @@ function olRunHostBattle(){
   });
   
   syncBattleUI();showScreen('battle');buildOrder();renderB();
-  playBGM('pvp');
+  playBGM('endless');
   B.log.push(`<b style="color:#3498db">🌐 局域网对战</b>`);
   B.log.push(`<b style="color:var(--gold)">── 回合 1 ──</b>`);
   renderB();
