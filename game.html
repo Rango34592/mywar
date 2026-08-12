@@ -1342,6 +1342,15 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
   <div style="font-size:12px;color:var(--text2);margin-bottom:16px">无需本地服务器 · 用自己的阵容对战 · 手机/电脑/iPad互斗</div>
   
   <div id="olLobby" style="text-align:center;width:100%;max-width:400px">
+    <div id="olSignalingConfig" style="background:linear-gradient(135deg,#1a2a4a,#0a1a2a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">
+      <div style="color:var(--text2);margin-bottom:6px">信令服务器（电脑需先运行启动脚本）</div>
+      <div style="display:flex;gap:6px;justify-content:center;align-items:center">
+        <input id="olSignalingHost" type="text" placeholder="localhost" style="width:140px;padding:6px 10px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:13px;text-align:center">
+        <span style="color:var(--text2)">:</span>
+        <input id="olSignalingPort" type="text" placeholder="9000" style="width:60px;padding:6px 8px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:13px;text-align:center">
+      </div>
+      <div id="olSignalingHint" style="margin-top:4px;font-size:10px;color:#888"></div>
+    </div>
     <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
       <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 创建房间</button>
     </div>
@@ -9831,6 +9840,41 @@ let olMyConfirmed=false;
 let olOpponentConfirmed=false;
 let olSelectedHeroUid=null;
 
+// 获取信令服务器地址
+function olGetHost(){
+  const input=document.getElementById('olSignalingHost');
+  if(input&&input.value.trim())return input.value.trim();
+  return location.hostname||'localhost';
+}
+function olGetPort(){
+  const input=document.getElementById('olSignalingPort');
+  if(input&&input.value.trim())return parseInt(input.value.trim())||9000;
+  return 9000;
+}
+
+// 初始化信令服务器地址输入框
+function olInitSignaling(){
+  const isFile=location.protocol==='file:';
+  const hintEl=document.getElementById('olSignalingHint');
+  const hostInput=document.getElementById('olSignalingHost');
+  const portInput=document.getElementById('olSignalingPort');
+  if(!hostInput||!portInput)return;
+  if(isFile){
+    // APK环境：提示用户填电脑IP
+    if(hintEl)hintEl.textContent='手机用户：填电脑的局域网IP（如192.168.1.100），电脑需先运行启动脚本';
+    hostInput.placeholder='192.168.x.x';
+  }else if(location.hostname&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
+    // 通过局域网IP访问（iPad等）
+    hostInput.value=location.hostname;
+    if(hintEl)hintEl.textContent='已自动填入当前服务器地址';
+  }else{
+    // localhost访问
+    hostInput.value='localhost';
+    if(hintEl)hintEl.textContent='电脑本地：已自动填入localhost';
+  }
+  portInput.value='9000';
+}
+
 // 一键复制房间号
 function olCopyIp(){
   const code=document.getElementById('olRoomCode');
@@ -9844,6 +9888,7 @@ function rOnlinePvp(){
   document.getElementById('olRoom').style.display='none';
   document.getElementById('olSetup').style.display='none';
   document.getElementById('olBattle').style.display='none';
+  olInitSignaling();
 }
 
 function olSend(msg){
@@ -9870,9 +9915,11 @@ function olCreateRoom(){
   
   // 创建PeerJS实例，ID=房间号前缀+随机码，确保唯一
   const peerId='mywar-room-'+code;
+  const olHost=olGetHost();
+  const olPort=olGetPort();
   olPeer=new Peer(peerId,{
-    host:location.hostname||'localhost',
-    port:9000,
+    host:olHost,
+    port:olPort,
     path:'/mywar',
     secure:location.protocol==='https:',
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
@@ -9927,9 +9974,11 @@ function olJoinRoom(){
   toast('正在连接...');
   
   const peerId='mywar-room-'+code;
+  const olHost=olGetHost();
+  const olPort=olGetPort();
   olPeer=new Peer({
-    host:location.hostname||'localhost',
-    port:9000,
+    host:olHost,
+    port:olPort,
     path:'/mywar',
     secure:location.protocol==='https:',
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
