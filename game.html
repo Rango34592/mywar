@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="我的战争">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="图标.jpg">
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="peerjs.min.js"></script>
 <title>MyWar - 战斗游戏</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -9861,8 +9861,9 @@ function olInitSignaling(){
   if(!hostInput||!portInput)return;
   if(isFile){
     // APK环境：提示用户填电脑IP
-    if(hintEl)hintEl.textContent='手机用户：填电脑的局域网IP（如192.168.1.100），电脑需先运行启动脚本';
+    hostInput.value='';
     hostInput.placeholder='192.168.x.x';
+    if(hintEl)hintEl.innerHTML='手机用户：填<strong>电脑的WiFi IP</strong>（电脑浏览器打开 game.html 页面地址栏的IP就是），电脑需先运行启动脚本';
   }else if(location.hostname&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
     // 通过局域网IP访问（iPad等）
     hostInput.value=location.hostname;
