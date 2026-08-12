@@ -5091,10 +5091,10 @@ function applyDmg(actor,target,rawDmg,_noReflect){
   }
   // 装备减伤
   if(target.eqDmgReduce>0){const orig=dmg;dmg=Math.round(dmg*(1-target.eqDmgReduce/100));if(orig!==dmg)B.log.push(`<span style="color:#3498db">🛡 ${target.name} 装备减伤${target.eqDmgReduce}%！伤害${orig}→${dmg}</span>`)}
-  // 无尽词条减伤
-  if(target._endlessDmgReduce>0&&!target.isE){const orig=dmg;dmg=Math.round(dmg*(1-target._endlessDmgReduce/100));if(orig!==dmg)B.log.push(`<span style="color:#9b59b6">🌀 ${target.name} 词条减伤${target._endlessDmgReduce}%！${orig}→${dmg}</span>`)}
-  // 无尽词条嗜血
-  if(dmg>0&&actor._endlessLifesteal>0&&!actor.isE){
+  // 无尽词条减伤（仅无尽模式内生效）
+  if(B.isEndless&&target._endlessDmgReduce>0&&!target.isE){const orig=dmg;dmg=Math.round(dmg*(1-target._endlessDmgReduce/100));if(orig!==dmg)B.log.push(`<span style="color:#9b59b6">🌀 ${target.name} 词条减伤${target._endlessDmgReduce}%！${orig}→${dmg}</span>`)}
+  // 无尽词条嗜血（仅无尽模式内生效）
+  if(B.isEndless&&dmg>0&&actor._endlessLifesteal>0&&!actor.isE){
     const lsHeal=Math.round(dmg*actor._endlessLifesteal/100);
     if(lsHeal>0){const healed=applyHeal(actor,lsHeal);if(healed>0){showDmg(actor.uid,healed,'heal');B.log.push(`<span style="color:#2ecc71">🌀 ${actor.name} 词条嗜血 +${healed}HP</span>`)}}
   }
@@ -8849,24 +8849,27 @@ function rEndless(){
 }
 
 function genEndlessEnemies(wave){
-  // 难度曲线：wave从1开始，平滑递增
-  // wave 1: ≈秘境diff 2   wave 5: ≈diff 4   wave 10: ≈diff 6   wave 20+: 远超正常
-  const diff=Math.min(7,1+wave*0.6); // 基础难度
-  const overLevel=Math.max(0,wave-10); // 超过10关后的额外倍率
-  const overMult=1+overLevel*0.15; // 每超1关+15%全属性
+  // 20级难度曲线：wave 1→2★, wave 20→6★高阶9满装备
+  const diff=Math.min(20,wave);
+  const diffMult=1+diff*0.1; // 怪物基础倍率 1.1x→3.0x
+  // 星级：2→6 平滑递增
+  const heroStar=Math.min(6,Math.max(2,Math.round(wave*6/20)));
+  const heroStarMult=Math.pow(1.2,heroStar-1);
+  const eqMaxStar=Math.min(6,heroStar);
+  // 阶数：wave1-5无, 6+递增, 20=满阶9
+  const maxRank=Math.min(9,Math.max(0,Math.floor((wave-5)*9/15)));
+  const rankChance=wave>=6?Math.min(1,(wave-5)*0.1):0;
+  // 装备概率：wave1很低, 20=1.0(两件全满)
+  const eqEquipChance=Math.min(1,0.05+wave*0.048);
+  // 圣遗物概率：wave7+才有, 20=0.95
+  const relicChance=wave>=7?Math.min(0.95,(wave-6)*0.08):0;
+  // 超越20关额外倍率
+  const overLevel=Math.max(0,wave-20);
+  const overMult=1+overLevel*0.2;
   const hKeys=Object.keys(H);
   const mPool=MONSTERS;
   const eqKeys=Object.keys(EQ);
-  let cnt=5; // 固定5人，不随关卡增加
-  // 星级：平滑上升，可超6★
-  const heroStar=Math.min(20,Math.max(2,Math.floor(2+wave*0.4)));
-  const eqMaxStar=Math.min(20,Math.max(0,heroStar-1));
-  const heroStarMult=Math.pow(1.2,heroStar-1);
-  // 阶数概率递增
-  const rankChance=Math.min(1,0.1+wave*0.05);
-  const maxRank=Math.min(9,Math.floor(wave/3));
-  // 圣遗物概率
-  const relicChance=Math.min(0.9,0.1+wave*0.04);
+  let cnt=5;
   const team=[];let fCnt=0;
   const usedHIds=new Set();
   for(let i=0;i<cnt;i++){
@@ -8879,16 +8882,15 @@ function genEndlessEnemies(wave){
       const row=(fCnt<3&&d.row==='front')?'front':'back';
       if(row==='front')fCnt++;
       let atk=Math.round(d.atk*heroStarMult),def=Math.round(d.def*heroStarMult),hp=Math.round(d.hp*heroStarMult),crit=d.crit,spd=d.spd;
-      // 阶数
+      // 阶数（无尽模式不限6★，5★以上也出阶）
       let heroRank=0;
-      if(heroStar>=6&&Math.random()<rankChance){
+      if(heroStar>=5&&Math.random()<rankChance){
         heroRank=ri(1,Math.max(1,maxRank));
       }
       const rankMult=1+heroRank*0.05;
       atk=Math.round(atk*rankMult);def=Math.round(def*rankMult);hp=Math.round(hp*rankMult);
       // 装备
       const eqList=[];let eqDmgReduce=0,eqHealBoost=0,eqLifesteal=0,eqThorns=0,eqCdmg=0;
-      const eqEquipChance=Math.min(0.95,0.3+wave*0.04);
       for(let s=0;s<2;s++){
         if(eqMaxStar>0&&Math.random()<eqEquipChance){
           const eqStar=ri(Math.max(1,eqMaxStar-1),eqMaxStar);
@@ -8927,11 +8929,10 @@ function genEndlessEnemies(wave){
       const b=mPool[ri(0,mPool.length-1)];
       const row=(fCnt<3&&b.row==='front')?'front':'back';
       if(row==='front')fCnt++;
-      const mStar=Math.min(20,Math.max(1,Math.floor(2+wave*0.4)));
+      const mStar=Math.min(6,heroStar);
       const sm=Math.pow(MON_MULT,mStar-1);
-      const bossMult=1+diff*0.1;
-      team.push({...b,atk:Math.round(b.atk*sm*bossMult*overMult),def:Math.round(b.def*sm*bossMult*overMult),
-        hp:Math.round(b.hp*sm*bossMult*overMult),maxHp:Math.round(b.hp*sm*bossMult*overMult),
+      team.push({...b,atk:Math.round(b.atk*sm*diffMult*overMult),def:Math.round(b.def*sm*diffMult*overMult),
+        hp:Math.round(b.hp*sm*diffMult*overMult),maxHp:Math.round(b.hp*sm*diffMult*overMult),
         star:mStar,
         uid:'el'+i,isE:true,crit:b.crit||5,cdmg:b.cdmg||1.5,cdLeft:0,pos:{row,idx:row==='front'?fCnt-1:i-fCnt},
         stun:0,bleed:0,atkBuff:0,atkBuffTurns:0,defBuff:0,defBuffTurns:0,defBuff2:0,
@@ -9205,50 +9206,54 @@ function exitEndless(){
   const cleared=es.wave; // 当前关已过
   G.endlessLast=cleared;
   if(!G.endlessBest||cleared>G.endlessBest)G.endlessBest=cleared;
-  // 结算奖励
+  // 结算奖励（适配20级难度曲线）
   let rewHtml=`<div class="ri" style="color:#ff6600">🌀 无尽深渊结算</div>`;
   rewHtml+=`<div class="ri" style="color:var(--gold)">通关 ${cleared} 关</div>`;
-  // 金币奖励：基础+每关递增（后期指数增长）
-  const goldBase=5000+cleared*2000+Math.max(0,cleared-10)*Math.max(0,cleared-10)*500;
+  // 金币奖励：平滑递增，后期指数增长
+  const goldBase=5000+cleared*3000+Math.max(0,cleared-10)*Math.max(0,cleared-10)*600;
   G.gold+=goldBase;
   rewHtml+=`<div class="ri">💰 金币 +${formatDmg(goldBase)}</div>`;
-  // 每过2关给一个英雄（后期高星）
+  // 英雄奖励：每2关一个，星级随难度
   if(cleared>=2){
-    const heroCount=Math.min(10,Math.floor(cleared/2));
+    const heroCount=Math.min(12,Math.floor(cleared/2));
     for(let i=0;i<heroCount;i++){
       const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
-      const minS=Math.min(6,Math.floor(cleared/3));
-      const maxS=Math.min(6,2+Math.floor(cleared/4));
+      const minS=Math.min(6,Math.max(1,Math.floor(cleared/4)));
+      const maxS=Math.min(6,Math.ceil(cleared/3));
       const star=ri(Math.min(minS,maxS),Math.max(minS,maxS));
       const uid=G.uid++;
-      addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:0});
-      rewHtml+=`<div class="ri" style="color:#9b59b6">🃏 获得 ${H[hid].name} ${'★'.repeat(star)}</div>`;
+      // 后期有概率出阶
+      let hRank=0;
+      if(cleared>=10&&Math.random()<0.3)hRank=ri(1,Math.min(5,Math.floor(cleared/4)));
+      addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:hRank});
+      const rkStr=hRank>0?` 阶${hRank}`:'';
+      rewHtml+=`<div class="ri" style="color:#9b59b6">🃏 获得 ${H[hid].name} ${'★'.repeat(star)}${rkStr}</div>`;
     }
   }
-  // 每过3关给一个装备
-  if(cleared>=3){
-    const eqCount=Math.min(8,Math.floor(cleared/3));
+  // 装备奖励：每2关一个
+  if(cleared>=2){
+    const eqCount=Math.min(10,Math.floor(cleared/2));
     for(let i=0;i<eqCount;i++){
       const eqKeys=Object.keys(EQ),eid=eqKeys[ri(0,eqKeys.length-1)];
-      const minS=Math.min(6,Math.floor(cleared/4));
-      const maxS=Math.min(6,2+Math.floor(cleared/4));
+      const minS=Math.min(6,Math.max(1,Math.floor(cleared/5)));
+      const maxS=Math.min(6,Math.ceil(cleared/3));
       const eqStar=ri(Math.min(minS,maxS),Math.max(minS,maxS));
       const eqUid=G.eqUid++;
       let eqRank=0;
-      if(cleared>=10&&Math.random()<0.3)eqRank=ri(1,Math.min(5,Math.floor(cleared/5)));
+      if(cleared>=8&&Math.random()<0.35)eqRank=ri(1,Math.min(7,Math.floor(cleared/3)));
       addEquip({id:eid,star:eqStar,uid:eqUid,rank:eqRank});
       const rkStr=eqRank>0?` 阶${eqRank}`:'';
       rewHtml+=`<div class="ri">🔧 获得 ${EQ[eid].name} ${'★'.repeat(eqStar)}${rkStr}</div>`;
     }
   }
-  // 每过5关给圣遗物
-  if(cleared>=5){
-    const relicCount=Math.min(5,Math.floor(cleared/5));
+  // 圣遗物奖励：每3关一个
+  if(cleared>=3){
+    const relicCount=Math.min(6,Math.floor(cleared/3));
     const rKeys=Object.keys(RELICS);
     for(let i=0;i<relicCount;i++){
       const rid=rKeys[ri(0,rKeys.length-1)];
-      const minS=Math.min(6,Math.floor(cleared/6));
-      const maxS=Math.min(6,2+Math.floor(cleared/6));
+      const minS=Math.min(6,Math.max(1,Math.floor(cleared/5)));
+      const maxS=Math.min(6,Math.ceil(cleared/3));
       const rs=ri(Math.min(minS,maxS),Math.max(minS,maxS));
       const rUid=G.relicUid++;
       addRelic({id:rid,star:rs,uid:rUid});
@@ -9257,13 +9262,13 @@ function exitEndless(){
   }
   // 里程碑奖励
   if(cleared>=10){
-    const bonus=Math.round(cleared*2000);
+    const bonus=Math.round(cleared*2500);
     G.gold+=bonus;
     rewHtml+=`<div class="ri" style="color:#f1c40f">🏆 深渊挑战奖励 +${formatDmg(bonus)}💰</div>`;
   }
   if(cleared>=15){
     const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
-    const rk15=ri(1,Math.min(5,Math.floor(cleared/5)));
+    const rk15=ri(1,Math.min(5,Math.floor(cleared/4)));
     addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:rk15});
     rewHtml+=`<div class="ri" style="color:var(--gold)">👑 15关里程碑！${H[hid].name} ★★★★★★ 阶${rk15}</div>`;
   }
@@ -9271,7 +9276,7 @@ function exitEndless(){
     const keys=Object.keys(H);
     for(let i=0;i<2;i++){
       const hid=keys[ri(0,keys.length-1)];
-      addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:ri(2,7)});
+      addHero({id:hid,star:6,uid:G.uid++,eq:[null,null],relicUid:null,rank:ri(2,9)});
       rewHtml+=`<div class="ri" style="color:var(--gold)">👑 20关里程碑！${H[hid].name} ★★★★★★ 高阶！</div>`;
     }
   }
