@@ -286,6 +286,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .sk-btn:active{transform:scale(.92);background:rgba(212,168,70,.15)}
 .sk-btn.on{border-color:var(--gold);box-shadow:0 0 12px var(--glow-gold);background:rgba(212,168,70,.1)}
 .sk-btn.cd{opacity:.35;cursor:not-allowed}
+.sk-btn.silenced{opacity:.5;border-color:#9b59b6!important;box-shadow:0 0 6px #9b59b6}
 .sk-btn img{width:32px;height:32px;object-fit:contain}
 .sk-btn .skn{font-size:9px;font-weight:bold;margin-top:1px}
 .sk-btn .skcd{font-size:10px;color:var(--gold);font-weight:bold}
@@ -1332,11 +1333,11 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
 <!-- 局域网联机对战 -->
 <div id="screen-onlinepvp" class="screen" style="padding:15px;align-items:center;overflow-y:auto">
   <div class="med-title" style="color:#3498db;text-shadow:0 0 15px rgba(52,152,219,.5),0 2px 4px rgba(0,0,0,.6)">🌐 局域网对战</div>
-  <div style="font-size:12px;color:var(--text2);margin-bottom:16px">同一WiFi下 · 两人实时对战 · 需房主开服务器</div>
+  <div style="font-size:12px;color:var(--text2);margin-bottom:16px">同一WiFi下 · 用自己的阵容对战 · 手机/电脑/iPad互斗</div>
   
   <div id="olLobby" style="text-align:center;width:100%;max-width:400px">
     <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
-      <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 创建房间</button>
+      <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 我是房主</button>
       <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:12px 28px;font-size:15px" onclick="olShowJoin()">🔗 加入房间</button>
     </div>
     <div id="olJoinBox" style="display:none;margin-top:12px">
@@ -1348,9 +1349,9 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
       <button class="med-btn" style="margin-top:10px;background:linear-gradient(180deg,#e67e22,#d35400);padding:8px 24px" onclick="olJoinRoom()">加入</button>
     </div>
     <div style="margin-top:20px;font-size:10px;color:#666;line-height:1.6;text-align:center">
-      使用前需在电脑上运行服务器脚本<br>
-      房主运行 .temp/ws_server.py + http.server<br>
-      两人连接同一WiFi即可
+      房主需在电脑上运行「我的战争-联机.bat」<br>
+      加入方在任何设备打开同一网页即可<br>
+      双方使用自己的存档阵容对决
     </div>
   </div>
   
@@ -4313,11 +4314,16 @@ function renderSkills(){
   const c=document.getElementById('bSkills');c.innerHTML='';
   if(!B||B.done)return;
   B.allies.filter(u=>u.hp>0).forEach(a=>{
-    const d=H[a.id];const onCd=a.cdLeft>0;const on=a.skOn;
+    const d=H[a.id];const onCd=a.cdLeft>0;const on=a.skOn;const isSilenced=a.silenced>0;
     const btn=document.createElement('div');
-    btn.className=`sk-btn ${onCd?'cd':''} ${on?'on':''}`;
-    btn.innerHTML=`<img src="${imgUrl(d.img)}" alt="" onerror="this.style.display='none'"><div class="skn">${d.sk.slice(0,2)}</div><div class="skcd">${onCd?a.cdLeft+'回合':on?'🔥已激活':'可用'}</div>`;
-    if(!onCd&&!B.done)btn.onclick=()=>{a.skOn=!a.skOn;renderSkills()};
+    btn.className=`sk-btn ${onCd?'cd':''} ${on?'on':''} ${isSilenced?'silenced':''}`;
+    btn.innerHTML=`<img src="${imgUrl(d.img)}" alt="" onerror="this.style.display='none'"><div class="skn">${d.sk.slice(0,2)}</div><div class="skcd">${isSilenced?'🤐沉默':onCd?a.cdLeft+'回合':on?'🔥已激活':'可用'}</div>`;
+    if(!onCd&&!B.done){
+      btn.onclick=()=>{
+        if(a.silenced>0){toast(`${a.name} 被沉默！无法使用技能`);return}
+        a.skOn=!a.skOn;renderSkills()
+      };
+    }
     c.appendChild(btn);
   });
 }
@@ -4846,10 +4852,16 @@ async function runBattle(){
     const actorTeam=actor.isE?B.enemies:B.allies;
     const allFullHp=actorTeam.every(u=>u.hp>=u.maxHp*0.95);
     if(G.auto&&(!actor.isE||B.isPvp)&&actor.cdLeft<=0&&!actor.skOn){
-      if(actor.id==='priest'&&allFullHp){/* 牧师全满血不开技能 */}
+      // 沉默检查：被沉默时不能自动开技能
+      if(actor.silenced>0){
+        actor.skOn=false;
+      }else if(actor.id==='priest'&&allFullHp){/* 牧师全满血不开技能 */}
       else actor.skOn=true;
     }
-    if(actor.isE&&B.isTitan&&actor.cdLeft<=0)actor.skOn=true;
+    if(actor.isE&&B.isTitan&&actor.cdLeft<=0){
+      if(actor.silenced>0)actor.skOn=false;
+      else actor.skOn=true;
+    }
 
     // Execute with animation
     B.busy=true;
@@ -9584,13 +9596,17 @@ function startPvpBattle(){
 
 function pvpStats(h,pd){
   const d=H[h.id],m=Math.pow(1.2,h.star-1);
-  let atk=Math.round(d.atk*m),def=Math.round(d.def*m),hp=Math.round(d.hp*m);
+  const rank=h.rank||0;
+  const rankMul=1+rank*0.05; // 英雄阶数+5%/阶
+  let atk=Math.round(d.atk*m*rankMul),def=Math.round(d.def*m*rankMul),hp=Math.round(d.hp*m*rankMul);
   let crit=d.crit,spd=d.spd,cdmg=d.cdmg;
   let eqDmgReduce=0,eqHealBoost=0,eqLifesteal=0,eqThorns=0;
   if(h.eq){h.eq.forEach(uid=>{if(uid===null)return;const eq=pd.equips.find(e=>e.uid===uid);if(!eq)return;const b=eqBonus(eq);
-    atk+=b.atk;def+=b.def;hp+=b.hp;crit+=b.crit;spd+=b.spd;cdmg+=b.cdmg;
+    const eqRank=eq.rank||0;const eqMul=1+eqRank*0.1; // 装备阶数+10%/阶
+    atk+=Math.round(b.atk*eqMul);def+=Math.round(b.def*eqMul);hp+=Math.round(b.hp*eqMul);
+    crit+=b.crit;spd+=b.spd;cdmg+=b.cdmg;
     eqDmgReduce+=b.dmgReduce;eqHealBoost+=b.healBoost;eqLifesteal+=b.lifesteal;eqThorns+=b.thorns})}
-  return{...d,atk,def,hp,maxHp:hp,cdmg:+cdmg.toFixed(2),crit,spd,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,star:h.star,uid:h.uid,relic:false,_relicId:null};
+  return{...d,atk,def,hp,maxHp:hp,cdmg:+cdmg.toFixed(2),crit,spd,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,star:h.star,uid:h.uid,relic:false,_relicId:null,rank};
 }
 
 function endPvpBattle(vic){
@@ -9784,18 +9800,61 @@ function olHandleMsg(msg){
 }
 
 function olGenerateMyData(){
-  const keys=Object.keys(H),eqKeys=Object.keys(EQ);
-  const heroes=[],equips=[];
-  const used=new Set();
-  for(let i=0;i<5;i++){
-    let hid;do{hid=keys[ri(0,keys.length-1)]}while(used.has(hid)&&used.size<keys.length);
-    used.add(hid);
-    heroes.push({id:hid,star:6,uid:'ol_h'+i,eq:[null,null],relicUid:null,rank:0});
+  // 使用存档中的英雄和装备
+  const myHeroes=G.heroes||[];
+  const myEquips=G.equips||[];
+  const myRelics=G.relics||[];
+  const myForm=G.form||[null,null,null,null,null];
+  // 深拷贝英雄和装备数据（避免修改原始存档）
+  const heroes=myHeroes.map((h,i)=>{
+    const newH={...h,uid:'ol_h'+i,eq:[h.eq?h.eq[0]:null,h.eq?h.eq[1]:null]};
+    // 映射relicUid
+    if(h.relicUid){
+      const rIdx=myRelics.findIndex(r=>r.uid===h.relicUid);
+      newH.relicUid=rIdx>=0?'ol_r'+rIdx:null;
+    }else{
+      newH.relicUid=null;
+    }
+    return newH;
+  });
+  const equips=myEquips.map((e,i)=>({...e,uid:'ol_e'+i}));
+  const relics=myRelics.map((r,i)=>({...r,uid:'ol_r'+i}));
+  // 阵型：保留当前布阵位置
+  const form=myForm.map(uid=>{
+    if(!uid)return null;
+    const idx=myHeroes.findIndex(h=>h.uid===uid);
+    return idx>=0?'ol_h'+idx:null;
+  });
+  // 装备分配：根据存档英雄的eq字段反推
+  const eqAssign={};
+  myHeroes.forEach((origH,i)=>{
+    const olUid='ol_h'+i;
+    const assigned=[];
+    if(origH.eq){
+      origH.eq.forEach(eqUid=>{
+        if(!eqUid)return;
+        const eIdx=myEquips.findIndex(e=>e.uid===eqUid);
+        if(eIdx>=0)assigned.push('ol_e'+eIdx);
+      });
+    }
+    if(assigned.length)eqAssign[olUid]=assigned;
+  });
+  olMyData={heroes,equips,relics,form,eqAssign};
+  // 如果没有存档英雄，生成随机5个
+  if(!heroes.length){
+    const keys=Object.keys(H),eqKeys=Object.keys(EQ);
+    const used=new Set();
+    for(let i=0;i<5;i++){
+      let hid;do{hid=keys[ri(0,keys.length-1)]}while(used.has(hid)&&used.size<keys.length);
+      used.add(hid);
+      heroes.push({id:hid,star:6,uid:'ol_h'+i,eq:[null,null],relicUid:null,rank:0});
+    }
+    for(let i=0;i<10;i++){
+      equips.push({id:eqKeys[ri(0,eqKeys.length-1)],star:ri(4,6),uid:'ol_e'+i});
+    }
+    olMyData.form=[null,null,null,null,null];
+    olMyData.eqAssign={};
   }
-  for(let i=0;i<10;i++){
-    equips.push({id:eqKeys[ri(0,eqKeys.length-1)],star:ri(4,6),uid:'ol_e'+i});
-  }
-  olMyData={heroes,equips,form:[null,null,null,null,null],eqAssign:{}};
 }
 
 function olShowSetup(){
@@ -9821,11 +9880,13 @@ function olRenderSetup(){
     const sel=olSelectedHeroUid===h.uid;
     let cls='pvp-r-hero';if(sel)cls+=' sel';if(placed>=0)cls+=' placed';
     const eqIds=pd.eqAssign[h.uid]||[];
+    const rankStr=h.rank>0?`<div style="font-size:9px;color:#e74c3c">阶${h.rank}</div>`:'';
     return `<div class="${cls}" onclick="olSelectHero('${h.uid}')" style="min-width:60px">
       ${placed>=0?`<span class="rh-badge">${placed<3?'后':'前'}${placed%3+1}</span>`:''}
       <img src="${imgUrl(d.img)}" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:4px">
-      <div style="font-size:10px;color:#ffd700">${'★'.repeat(h.star)}</div>
+      <div style="font-size:10px;color:${h.star>=6?'#ffd700':h.star>=5?'#e67e22':'#ccc'}">${'★'.repeat(h.star)}</div>
       <div style="font-size:10px">${d.name}</div>
+      ${rankStr}
       ${eqIds.length?`<div style="font-size:9px;color:#3498db">装×${eqIds.length}</div>`:''}
     </div>`;
   }).join('');
@@ -9837,11 +9898,12 @@ function olRenderSetup(){
     <span style="font-size:11px;color:var(--text2);width:30px">${r.label}</span>
     ${r.slots.map(i=>{
       const uid=pd.form[i];
-      if(uid===null)return `<div style="width:60px;height:60px;border:2px dashed #555;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555;cursor:pointer" onclick="olPlaceHero(${i})">+</div>`;
+      if(uid===null)return `<div style="width:60px;height:60px;border:2px dashed #555;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555;cursor:pointer;font-size:20px" onclick="olPlaceHero(${i})">+</div>`;
       const h=pd.heroes.find(x=>x.uid===uid),d=H[h.id];
+      const rk=h.rank>0?`<div style="font-size:8px;color:#e74c3c">阶${h.rank}</div>`:'';
       return `<div style="width:60px;height:60px;border:2px solid #ffd700;border-radius:6px;text-align:center;cursor:pointer;background:#1a0a00" onclick="olPlaceHero(${i})">
         <img src="${imgUrl(d.img)}" onerror="this.style.display='none'" style="width:32px;height:32px;border-radius:4px;margin-top:2px">
-        <div style="font-size:9px;color:#ffd700">${d.name}</div></div>`;
+        <div style="font-size:9px;color:#ffd700">${d.name}</div>${rk}</div>`;
     }).join('')}</div>`).join('');
   
   // 装备信息
@@ -9850,9 +9912,15 @@ function olRenderSetup(){
     const h=pd.heroes.find(x=>x.uid===olSelectedHeroUid);
     const d=H[h.id];
     const eqIds=pd.eqAssign[olSelectedHeroUid]||[];
-    eqInfo.textContent=`${d.name} — 装备: ${eqIds.length}/2 (点击阵型空位放置，再点已放英雄分配装备)`;
+    // 列出英雄当前装备
+    let eqDetail='';
+    if(eqIds.length){
+      const names=eqIds.map(euid=>{const eq=pd.equips.find(e=>e.uid===euid);return eq?EQ[eq.id].name+'('+eq.star+'★)':'';}).filter(Boolean);
+      eqDetail=` 已装: ${names.join(', ')}`;
+    }
+    eqInfo.textContent=`${d.name} — 装备: ${eqIds.length}/2${eqDetail} (点空位放置，点已放英雄换装)`;
   }else{
-    eqInfo.textContent='选择英雄后点击阵型空位放置';
+    eqInfo.textContent='点击英雄选择，再点阵型空位放置';
   }
 }
 
@@ -9965,6 +10033,12 @@ function olRunHostBattle(){
       const h=pd.heroes.find(x=>x.uid===uid);if(!h)return;
       const eqUids=pd.eqAssign[uid]||[];h.eq=[eqUids[0]||null,eqUids[1]||null];
       const s=pvpStats(h,pd);
+      // 圣遗物
+      let relicObj=null,relicId=null;
+      if(h.relicUid){
+        const rData=pd.relics?pd.relics.find(r=>r.uid===h.relicUid):null;
+        if(rData){relicId=rData.id;relicObj=rData}
+      }
       units.push({...s,hp:s.hp,maxHp:s.maxHp,isE,pos:pMap[i],cdLeft:0,skOn:false,
         taunt:false,tauntPerm:false,defBuff:0,atkBuff:0,atkBuffTurns:0,defBuffTurns:0,defBuff2:0,
         stun:0,bleed:0,bleedDmg:0,poisons:[],bleeds:[],revived:false,kangwaUsed:false,
@@ -9973,7 +10047,7 @@ function olRunHostBattle(){
         spdReduce:0,spdReduceAmt:0,marked:0,markedBy:null,
         armorBreak:false,extraAction:false,charmed:0,
         debuffImmune:s.id==='swordsman'||s.id==='xu'||s.id==='ziranwupo',
-        relic:s.relic||false,_relicId:s._relicId});
+        relic:!!relicObj,_relicId:relicId});
     });return units;
   }
   
