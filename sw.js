@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mywar-v4';
+const CACHE_NAME = 'mywar-v5';
 const IMG_CACHE = 'mywar-img-v1';
 const MUSIC_CACHE = 'mywar-music-v1';
 
