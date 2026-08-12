@@ -1128,6 +1128,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
       <div style="font-size:42px;font-weight:bold;color:#ffd700;text-shadow:0 0 20px #ffd700,0 0 40px #8b4513;margin-bottom:8px;letter-spacing:4px" class="med-title">⚔ 我的战争 ⚔</div>
       <div style="font-size:13px;color:#8b6914;margin-bottom:30px">中世纪回合制卡牌对战</div>
       <div id="titleSlots"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+        <button onclick="exportSave()" style="padding:6px 16px;background:linear-gradient(180deg,#2a4a6a,#1a2a4a);color:#7eb5da;border:1px solid #4a7eb5;border-radius:6px;cursor:pointer;font-size:12px">📥 导出存档</button>
+        <button onclick="importSave()" style="padding:6px 16px;background:linear-gradient(180deg,#2a6a4a,#1a4a2a);color:#5acc8a;border:1px solid #3a9e5c;border-radius:6px;cursor:pointer;font-size:12px">📤 导入存档</button>
+      </div>
     </div>
   </div>
   <audio id="bgm" loop preload="auto"><source src="mywar音乐/战斗音乐.mp3" type="audio/mpeg"></audio>
@@ -1734,6 +1738,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 </div>
 
 <script>
+// URL-encode image paths for old Safari/iOS compatibility (Chinese chars in URLs)
+function imgUrl(p){return p?encodeURI(p):p}
+
 // ============= HERO DEFINITIONS =============
 const H = {
   swordsman:{id:'swordsman',name:'剑士',img:'英雄图片/剑士.jpg',atk:150,def:30,hp:1000,cdmg:1.5,crit:5,spd:3,
@@ -2367,7 +2374,7 @@ function renderFgSlots(){
       if(!h){fgSlots[i]=null;el.className='fg-slot';el.innerHTML='<span>+</span>';continue}
       const d=H[h.id];
       el.className='fg-slot filled';
-      el.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name} ${'★'.repeat(h.star)}</div><div class="sx2" onclick="event.stopPropagation();fgRemove(${i})">✕</div>`;
+      el.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name} ${'★'.repeat(h.star)}</div><div class="sx2" onclick="event.stopPropagation();fgRemove(${i})">✕</div>`;
     }
   }
   // Enable/disable forge button
@@ -2400,7 +2407,7 @@ function renderFgResult(){
   const sameHero=new Set(ids).size===1;
   if(sameHero){
     const d=H[ids[0]];
-    el.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="rn" style="color:var(--green)">${d.name} ${'★'.repeat(nextStar)}</div>`;
+    el.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="rn" style="color:var(--green)">${d.name} ${'★'.repeat(nextStar)}</div>`;
   }else{
     el.innerHTML=`<span style="color:var(--gold)">${'★'.repeat(nextStar)} 随机</span>`;
   }
@@ -2416,7 +2423,7 @@ function renderFgSell(){
     const inForm=G.form.includes(h.uid);
     const rk=h.rank||0;
     const div=document.createElement('div');div.className='fg-sell-item';
-    div.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="si-name">${d.name} ${'★'.repeat(h.star)}${rk>0?` <span style="color:var(--gold);font-size:9px">${rk}阶</span>`:''}${inForm?' <span class="h-deployed" style="font-size:8px">阵</span>':''}</div><div class="si-price">${price}💰</div>`;
+    div.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="si-name">${d.name} ${'★'.repeat(h.star)}${rk>0?` <span style="color:var(--gold);font-size:9px">${rk}阶</span>`:''}${inForm?' <span class="h-deployed" style="font-size:8px">阵</span>':''}</div><div class="si-price">${price}💰</div>`;
     div.style.opacity=inForm?'.65':'';
     div.onclick=()=>sellHero(h.uid);
     c.appendChild(div);
@@ -2441,7 +2448,7 @@ function fgPick(slotIdx){
     const inForm=G.form.includes(h.uid);
     const rk=h.rank||0;
     const div=document.createElement('div');div.className='fg-pick-item';
-    div.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><span>${d.name} ${'★'.repeat(h.star)}</span>${rk>0?`<span style="color:var(--gold);font-size:8px">${rk}阶</span>`:''}${inForm?'<span class="h-deployed" style="font-size:8px">阵</span>':''}`;
+    div.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><span>${d.name} ${'★'.repeat(h.star)}</span>${rk>0?`<span style="color:var(--gold);font-size:8px">${rk}阶</span>`:''}${inForm?'<span class="h-deployed" style="font-size:8px">阵</span>':''}`;
     div.style.opacity=inForm?'.65':'';
     div.onclick=()=>{
       fgSlots[fgPickingSlot]=h.uid;
@@ -2504,7 +2511,7 @@ function doForge(){
   // Show result
   const resEl=document.getElementById('fgResult');
   const d=H[hid];
-  resEl.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="rn">${d.name} ${'★'.repeat(newStar)}</div>`;
+  resEl.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="rn">${d.name} ${'★'.repeat(newStar)}</div>`;
   toast(`合成成功！获得 ${d.name} ${'★'.repeat(newStar)}` + (sameHero?'（同角色升级）':''));
 }
 
@@ -2547,7 +2554,7 @@ function doForgeTarget(){
     rProfile();
     const resEl=document.getElementById('fgResult');
     const d=H[finalId];
-    resEl.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="rn" style="color:${hit?'var(--green)':'var(--gold)'}">${d.name} ${'★'.repeat(nextStar)}</div>`;
+    resEl.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="rn" style="color:${hit?'var(--green)':'var(--gold)'}">${d.name} ${'★'.repeat(nextStar)}</div>`;
     toast(hit?`定向命中！获得 ${d.name} ${'★'.repeat(nextStar)}`:`定向未命中，获得 ${d.name} ${'★'.repeat(nextStar)}`);
     sfx('skill');saveGame();
   });
@@ -3083,7 +3090,7 @@ function renderSwapSlots(){
     const h=G.heroes.find(x=>x.uid===swapHeroUid);
     if(h){
       const d=H[h.id];
-      hEl.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name}</div><div class="sx2" onclick="event.stopPropagation();swapHeroUid=null;renderSwapSlots()">✕</div>`;
+      hEl.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name}</div><div class="sx2" onclick="event.stopPropagation();swapHeroUid=null;renderSwapSlots()">✕</div>`;
     }else{swapHeroUid=null;hEl.innerHTML='+'}
   }else{hEl.innerHTML='+'}
   // Eq slot
@@ -3140,7 +3147,7 @@ function swapPick(type){
     list.forEach(h=>{
       const d=H[h.id];const div=document.createElement('div');div.className='fg-pick-item';
       const inForm=G.form.includes(h.uid);const rk=h.rank||0;
-      div.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><span>${d.name} <span style="color:${gCol(h.star)}">${stars(h.star)}</span></span>${rk>0?`<span style="color:var(--gold);font-size:8px">${rk}阶</span>`:''}${inForm?'<span class="h-deployed" style="font-size:8px">阵</span>':''}`;
+      div.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><span>${d.name} <span style="color:${gCol(h.star)}">${stars(h.star)}</span></span>${rk>0?`<span style="color:var(--gold);font-size:8px">${rk}阶</span>`:''}${inForm?'<span class="h-deployed" style="font-size:8px">阵</span>':''}`;
       div.style.opacity=inForm?'.65':'';
       div.onclick=()=>{swapHeroUid=h.uid;document.getElementById('swapOverlay').classList.remove('show');renderSwapSlots()};
       c.appendChild(div);
@@ -3199,7 +3206,7 @@ function doSwap(type){
     const newUid=G.uid++;
     addHero({id:newId,star:oldStar,uid:newUid,eq:[null,null],relicUid:null,rank:0});
     const d=H[newId];
-    document.getElementById('swapHeroResult').innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name} <span style="color:${gCol(oldStar)}">${stars(oldStar)}</span></div>`;
+    document.getElementById('swapHeroResult').innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name} <span style="color:${gCol(oldStar)}">${stars(oldStar)}</span></div>`;
     toast(`置换成功！获得 ${d.name} ${oldStar}★`);
     sfx('skill');
     swapHeroUid=null;
@@ -3287,7 +3294,7 @@ function doSwapTarget(type){
       const newUid=G.uid++;
       addHero({id:finalId,star:oldStar,uid:newUid,eq:[null,null],relicUid:null,rank:0});
       const d=H[finalId];
-      document.getElementById('swapHeroResult').innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name} <span style="color:${gCol(oldStar)}">${stars(oldStar)}</span></div>`;
+      document.getElementById('swapHeroResult').innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name} <span style="color:${gCol(oldStar)}">${stars(oldStar)}</span></div>`;
       toast(hit?`定向命中！获得 ${d.name} ${oldStar}★`:`定向未命中，获得 ${d.name} ${oldStar}★`);
       sfx('skill');
       swapHeroUid=null;
@@ -3602,7 +3609,7 @@ function rHeroes(){
     const deployed=formSet.has(h.uid);
     const div=document.createElement('div');
     div.className='h-thumb'+(G.selUid===h.uid?' sel':'');
-    div.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><span class="hn">${d.name}</span>${deployed?'<span class="h-deployed">阵</span>':''}<span class="hs" style="color:${gCol(h.star)}">${'★'.repeat(Math.min(h.star,6))}</span>${(h.rank||0)>0?`<span style="color:var(--gold);font-size:9px">${h.rank}阶</span>`:''}`;
+    div.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><span class="hn">${d.name}</span>${deployed?'<span class="h-deployed">阵</span>':''}<span class="hs" style="color:${gCol(h.star)}">${'★'.repeat(Math.min(h.star,6))}</span>${(h.rank||0)>0?`<span style="color:var(--gold);font-size:9px">${h.rank}阶</span>`:''}`;
     div.onclick=()=>{G.selUid=h.uid;rHeroes()};list.appendChild(div);
   });
   // Page controls
@@ -3616,7 +3623,7 @@ function rHeroes(){
 
 function rHeroDetail(h){
   const s=stats(h),d=H[h.id];
-  document.getElementById('hArtImg').src=d.img;
+  document.getElementById('hArtImg').src=imgUrl(d.img);
   const deployed=G.form.includes(h.uid);
   const rk=h.rank||0;
   document.getElementById('hName').innerHTML=`${d.name} <span style="color:${gCol(h.star)};font-size:14px">${stars(h.star)}</span>${rk>0?` <span style="color:var(--gold);font-size:13px">${rk}阶</span>`:''}${deployed?' <span style="background:var(--red);color:#fff;font-size:10px;border-radius:3px;padding:1px 5px;vertical-align:middle">已上阵</span>':''}`;
@@ -3832,7 +3839,7 @@ function rForm(){
     if(uid!==null){
       const h=G.heroes.find(x=>x.uid===uid),d=H[h.id];
       slot.className='fm-slot filled';
-      slot.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name}</div><div class="sx" onclick="event.stopPropagation();rmForm(${i})">✕</div>`;
+      slot.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><div class="sn">${d.name}</div><div class="sx" onclick="event.stopPropagation();rmForm(${i})">✕</div>`;
     }else{slot.className='fm-slot';slot.innerHTML='<div style="font-size:24px;color:var(--border)">+</div>'}
   });
 }
@@ -3843,7 +3850,7 @@ function openPicker(idx){
   G.heroes.forEach(h=>{
     const d=H[h.id],isUsed=used.has(h.uid)&&G.form[pickerIdx]!==h.uid;
     const div=document.createElement('div');div.className='hp-item'+(isUsed?' used':'');
-    div.innerHTML=`<img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'"><span style="color:${gCol(h.star)};font-size:9px">${'★'.repeat(Math.min(h.star,6))}</span><span>${d.name}</span>${(h.rank||0)>0?`<span style="color:var(--gold);font-size:9px">${h.rank}阶</span>`:''}`;
+    div.innerHTML=`<img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'"><span style="color:${gCol(h.star)};font-size:9px">${'★'.repeat(Math.min(h.star,6))}</span><span>${d.name}</span>${(h.rank||0)>0?`<span style="color:var(--gold);font-size:9px">${h.rank}阶</span>`:''}`;
     if(!isUsed)div.onclick=()=>{G.form[pickerIdx]=h.uid;closePicker();rForm()};list.appendChild(div);
   });
   document.getElementById('pickerOv').classList.add('show');
@@ -3902,7 +3909,7 @@ function doRecruitTarget(type){
     sfx('recruit');
     document.getElementById('rcPh').style.display='none';
     document.getElementById('rcResult').classList.add('show');
-    document.getElementById('rcImg').src=d.img;
+    document.getElementById('rcImg').src=imgUrl(d.img);
     document.getElementById('rcName').textContent=d.name;document.getElementById('rcName').style.color=gCol(star);
     document.getElementById('rcStar').innerHTML=`<span style="color:${gCol(star)}">${stars(star)}</span>`;
     toast(hit?`定向命中！获得 ${d.name} ${stars(star)}`:`定向未命中，获得 ${d.name} ${stars(star)}`);
@@ -3952,7 +3959,7 @@ function doRecruit(type){
   sfx('recruit');
   document.getElementById('rcPh').style.display='none';
   document.getElementById('rcResult').classList.add('show');
-  document.getElementById('rcImg').src=d.img;
+  document.getElementById('rcImg').src=imgUrl(d.img);
   document.getElementById('rcName').textContent=d.name;document.getElementById('rcName').style.color=gCol(star);
   document.getElementById('rcStar').innerHTML=`<span style="color:${gCol(star)}">${stars(star)}</span>`;
   // Small chance for relic drop
@@ -4205,7 +4212,7 @@ function renderSkills(){
     const d=H[a.id];const onCd=a.cdLeft>0;const on=a.skOn;
     const btn=document.createElement('div');
     btn.className=`sk-btn ${onCd?'cd':''} ${on?'on':''}`;
-    btn.innerHTML=`<img src="${d.img}" alt="" onerror="this.style.display='none'"><div class="skn">${d.sk.slice(0,2)}</div><div class="skcd">${onCd?a.cdLeft+'回合':on?'🔥已激活':'可用'}</div>`;
+    btn.innerHTML=`<img src="${imgUrl(d.img)}" alt="" onerror="this.style.display='none'"><div class="skn">${d.sk.slice(0,2)}</div><div class="skcd">${onCd?a.cdLeft+'回合':on?'🔥已激活':'可用'}</div>`;
     if(!onCd&&!B.done)btn.onclick=()=>{a.skOn=!a.skOn;renderSkills()};
     c.appendChild(btn);
   });
@@ -6972,7 +6979,7 @@ function rArena(){
       }).join('')+'</div>';
     }
     card.innerHTML=`<div class="en-row">${u.pos.row==='front'?'前':'后'}</div>
-      <img src="${d.img}" alt="${u.name}" onerror="this.style.display='none'">
+      <img src="${imgUrl(d.img)}" alt="${u.name}" onerror="this.style.display='none'">
       <div class="en-star">${'★'.repeat(Math.min(u.star,10))}${(u._rank||0)>0?' '+u._rank+'阶':''}</div>
       <div class="en-name">${u.name}</div>
       <div style="color:var(--gold);font-size:10px;font-weight:bold">⚔ ${calcPower(u).toLocaleString()}</div>
@@ -7032,7 +7039,7 @@ function rTitans(){
       const relicStr=rl?`<div class="th-rl">${rl.icon} ${rl.name} 6★</div>`:'';
       heroesHtml+=`<div class="titan-hero">
         <div class="th-row">${th.row==='front'?'前排':'后排'}</div>
-        <img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'">
+        <img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'">
         <div class="th-star">${'★'.repeat(6)}</div>
         <div class="th-rank">9阶</div>
         <div class="th-name">${d.name}</div>
@@ -7687,7 +7694,7 @@ function rCodexHero(){
     card.onclick=()=>openCodexModal(id);
     card.innerHTML=`
       ${!owned?'<div class="cd-lock-icon">🔒</div>':''}
-      <img class="cd-card-img" src="${d.img}" alt="${d.name}" onerror="this.style.display='none'" onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')">
+      <img class="cd-card-img" src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'" onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')">
       <div class="cd-card-name">${d.name}</div>
       <div class="cd-card-stars">${starStr}</div>
       <div class="cd-card-type">${d.row==='front'?'前排':'后排'} · ${d.rng==='melee'?'近战':'远程'}</div>
@@ -7756,7 +7763,7 @@ function renderCodexModal(id,star,owned,ownedStars){
   const skCd=d.skCd;
 
   document.getElementById('cdModalTop').innerHTML=`
-    <img class="cd-modal-portrait" src="${d.img}" alt="${d.name}" onerror="this.style.display='none'" style="cursor:pointer" onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')">
+    <img class="cd-modal-portrait" src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'" style="cursor:pointer" onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')">
     <div class="cd-modal-name">${d.name}</div>
     <div class="cd-modal-stars-row">
       <div class="cd-modal-stars">${'★'.repeat(star)}${'☆'.repeat(Math.max(0,6-star))}</div>
@@ -7824,7 +7831,7 @@ function closeCodexModal(){
 // ---- 图片大图查看 ----
 function showBigImg(src,name){
   if(!src)return;
-  document.getElementById('bigImgContent').src=src;
+  document.getElementById('bigImgContent').src=imgUrl(src);
   document.getElementById('bigImgName').textContent=name||'';
   document.getElementById('bigImgOverlay').classList.add('show');
 }
@@ -7981,7 +7988,7 @@ function rCodexEquip(){
     card.onclick=()=>openEquipCodexModal(id);
     card.innerHTML=`
       ${!owned?'<div class="cd-lock-icon">🔒</div>':''}
-      <div class="cd-card-img" style="display:flex;align-items:center;justify-content:center;height:60px;${d.img?`cursor:pointer`:''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')"`:''}>${eqImg(d,48)}</div>
+      <div class="cd-card-img" style="display:flex;align-items:center;justify-content:center;height:60px;${d.img?`cursor:pointer`:''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')"`:''}>${eqImg(d,48)}</div>
       <div class="cd-card-name">${d.name}</div>
       <div class="cd-card-stars">${starStr}</div>
       <div class="cd-card-type">${EQ_TYPE_LABEL[d.type]||d.type}</div>
@@ -8028,7 +8035,7 @@ function renderEquipCodexModal(id,star,owned,ownedStars){
   const d=EQ[id];
 
   document.getElementById('cdModalTop').innerHTML=`
-    <div style="margin-bottom:4px;${d.img?'cursor:pointer':''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')"`:''}>${eqImg(d,48)}</div>
+    <div style="margin-bottom:4px;${d.img?'cursor:pointer':''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')"`:''}>${eqImg(d,48)}</div>
     <div class="cd-modal-name">${d.name}</div>
     <div class="cd-modal-stars-row">
       <div class="cd-modal-stars">${'★'.repeat(star)}${'☆'.repeat(Math.max(0,6-star))}</div>
@@ -8310,7 +8317,7 @@ function rShop(){
     const div=document.createElement('div');
     div.className='sh-card'+(item.sold?' sold':'');
     div.innerHTML=`${item.sold?'<div class="sh-sold-tag">已购</div>':''}
-      <img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'">
+      <img src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'">
       <div class="sh-name">${d.name}</div>
       <div class="sh-star">${'★'.repeat(item.star)}</div>
       <div class="sh-price">💰 ${item.price}</div>`;
@@ -8873,7 +8880,7 @@ function rPvpPlayer(){
     const eqDots=eqIds.length>0?`<div class="rh-eq-dots">${[0,1].map(i=>`<span class="rh-eq-dot${i<eqIds.length?' filled':''}"></span>`).join('')}</div>`:'';
     return `<div class="${cls}" onclick="pvpSelectHero('${h.uid}')">
       ${placed>=0?`<span class="rh-badge">${placed<3?'后':'前'}${placed%3+1}</span>`:''}
-      <img src="${d.img}" onerror="this.style.display='none'">
+      <img src="${imgUrl(d.img)}" onerror="this.style.display='none'">
       <span class="rh-star">${'★'.repeat(h.star)}</span>
       <span class="rh-name">${d.name}</span>${eqDots}</div>`;
   }).join('');
@@ -8894,7 +8901,7 @@ function rPvpPlayer(){
       const eqHtml=eqIds.length?`<div class="sf-eq">${eqIds.map(eUid=>{const eq=pd.equips.find(x=>x.uid===eUid);return eq?eqImg(EQ[eq.id],10):''}).join('')}</div>`
         :`<div class="sf-eq-empty"></div>`;
       return `<div class="pvp-fslot2 filled" onclick="pvpPlaceHero(${i})">
-        <img src="${d.img}" onerror="this.style.display='none'"><span class="sf-name">${d.name}</span>${eqHtml}</div>`;
+        <img src="${imgUrl(d.img)}" onerror="this.style.display='none'"><span class="sf-name">${d.name}</span>${eqHtml}</div>`;
     }).join('')}</div>`).join('');
   // Equipment tray
   const et=document.getElementById('pvpEqTray');
@@ -8917,7 +8924,7 @@ function rPvpDetail(){
   const rowTag=placed>=0?(placed<3?'后排':'前排'):'未上阵';
   const bN='<span class="ds-bonus">+';const bE='</span>';
   det.innerHTML=`<div class="pvp-d-header">
-    <img src="${d.img}" onerror="this.style.display='none'">
+    <img src="${imgUrl(d.img)}" onerror="this.style.display='none'">
     <div><div class="pvp-d-name">${d.name}</div><div class="pvp-d-stars">${'★'.repeat(h.star)}</div></div>
     <span class="pvp-d-row">${rowTag}</span></div>
     <div class="pvp-d-stats">
@@ -9122,6 +9129,54 @@ function loadGame(slot){
 }
 function deleteSave(slot){
   const saves=getSaves();delete saves[slot];putSaves(saves);
+}
+
+// ============= SAVE EXPORT/IMPORT (for old iOS Safari where localStorage may not persist) =============
+function exportSave(){
+  const saves=getSaves();
+  if(Object.keys(saves).length===0){alert('没有存档可导出');return}
+  const str=btoa(unescape(encodeURIComponent(JSON.stringify(saves))));
+  const ta=document.createElement('textarea');
+  ta.value=str;
+  ta.style.cssText='position:fixed;top:50%;left:50%;width:90%;max-width:500px;height:200px;transform:translate(-50%,-50%);z-index:99999;background:#1a152e;color:#e8dcc8;border:2px solid #d4a846;border-radius:8px;padding:12px;font-size:11px';
+  document.body.appendChild(ta);
+  ta.select();
+  const tip=document.createElement('div');
+  tip.textContent='长按下方文字→全选→复制。退出游戏前先复制保存，下次用「导入存档」粘贴恢复。';
+  tip.style.cssText='position:fixed;top:20%;left:50%;transform:translateX(-50%);z-index:99999;background:#1a152e;color:#d4a846;padding:10px 20px;border-radius:8px;border:1px solid #d4a846;font-size:13px;max-width:90%;text-align:center';
+  document.body.appendChild(tip);
+  const btn=document.createElement('button');
+  btn.textContent='关闭';
+  btn.style.cssText='position:fixed;top:75%;left:50%;transform:translateX(-50%);z-index:99999;padding:8px 24px;background:#8b6914;color:#fff;border:1px solid #ffd700;border-radius:6px;cursor:pointer';
+  btn.onclick=()=>{ta.remove();tip.remove();btn.remove()};
+  document.body.appendChild(btn);
+}
+function importSave(){
+  const ta=document.createElement('textarea');
+  ta.placeholder='在此粘贴你的存档代码...';
+  ta.style.cssText='position:fixed;top:40%;left:50%;width:90%;max-width:500px;height:120px;transform:translate(-50%,-50%);z-index:99999;background:#1a152e;color:#e8dcc8;border:2px solid #d4a846;border-radius:8px;padding:12px;font-size:11px';
+  document.body.appendChild(ta);
+  ta.focus();
+  const btnRow=document.createElement('div');
+  btnRow.style.cssText='position:fixed;top:60%;left:50%;transform:translateX(-50%);z-index:99999;display:flex;gap:10px';
+  document.body.appendChild(btnRow);
+  const ok=document.createElement('button');
+  ok.textContent='确认导入';
+  ok.style.cssText='padding:8px 20px;background:linear-gradient(180deg,#3a9e5c,#2a7e3c);color:#fff;border:1px solid #3a9e5c;border-radius:6px;cursor:pointer';
+  ok.onclick=()=>{
+    try{
+      const str=ta.value.trim();
+      if(!str){alert('请粘贴存档代码');return}
+      const saves=JSON.parse(decodeURIComponent(escape(atob(str))));
+      putSaves(saves);
+      alert('导入成功！');ta.remove();btnRow.remove();renderTitleScreen();
+    }catch(e){alert('存档代码无效，请检查是否完整复制')}
+  };
+  const cancel=document.createElement('button');
+  cancel.textContent='取消';
+  cancel.style.cssText='padding:8px 20px;background:linear-gradient(180deg,#4a1a1a,#2a0a0a);color:#c0392b;border:1px solid #c0392b;border-radius:6px;cursor:pointer';
+  cancel.onclick=()=>{ta.remove();btnRow.remove()};
+  btnRow.appendChild(ok);btnRow.appendChild(cancel);
 }
 
 function renderTitleScreen(){
