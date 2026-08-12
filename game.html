@@ -10081,21 +10081,6 @@ function olJoinRoom(){
     olSetupConn(conn);
   });
   
-  // 连接超时检测
-  const openTimer=setTimeout(()=>{
-    if(olPeer&&!olPeer.destroyed){
-      toast(olServerMode==='cloud'?'连接云服务器超时，请检查网络':'连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.同一WiFi');
-      olCleanup();
-    }
-  },olServerMode==='cloud'?12000:8000);
-  
-  olPeer.on('open',()=>{
-    clearTimeout(openTimer);
-    const conn=olPeer.connect(peerId,{reliable:true});
-    olConn=conn;
-    olSetupConn(conn);
-  });
-  
   olPeer.on('error',err=>{
     clearTimeout(openTimer);
     console.error('PeerJS error',err);
