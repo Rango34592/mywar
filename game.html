@@ -1337,22 +1337,25 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
   <div style="font-size:12px;color:var(--text2);margin-bottom:16px">同一WiFi下 · 用自己的阵容对战 · 手机/电脑/iPad互斗</div>
   
   <div id="olLobby" style="text-align:center;width:100%;max-width:400px">
+    <div id="olServerStatus" style="background:linear-gradient(135deg,#1a2a4a,#0a1a2a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px">
+      <span style="color:var(--text2)">服务器状态：</span><span id="olServerCheck" style="color:#f39c12">检测中...</span>
+    </div>
     <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
-      <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 我是房主</button>
+      <button class="med-btn" style="background:linear-gradient(135deg,#3498db,#2980b9);padding:12px 28px;font-size:15px" onclick="olCreateRoom()">🏠 创建房间</button>
       <button class="med-btn" style="background:linear-gradient(135deg,#e67e22,#d35400);padding:12px 28px;font-size:15px" onclick="olShowJoin()">🔗 加入房间</button>
     </div>
     <div id="olJoinBox" style="display:none;margin-top:12px">
       <div style="margin-bottom:8px;font-size:13px;color:var(--text2)">输入房主IP地址：</div>
-      <input id="olJoinIp" type="text" placeholder="例如 192.168.1.100" style="width:200px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
+      <input id="olJoinIp" type="text" placeholder="例如 192.168.1.100" value="" style="width:200px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
       <div style="margin:8px 0;font-size:13px;color:var(--text2)">房间号：</div>
       <input id="olJoinCode" type="text" placeholder="房间号" style="width:100px;padding:8px 12px;background:#1a152e;color:#e8dcc8;border:2px solid #4a7eb5;border-radius:6px;font-size:14px;text-align:center">
       <br>
       <button class="med-btn" style="margin-top:10px;background:linear-gradient(180deg,#e67e22,#d35400);padding:8px 24px" onclick="olJoinRoom()">加入</button>
+      <div style="margin-top:6px;font-size:10px;color:#555">同一WiFi下默认IP同房主页面地址</div>
     </div>
     <div style="margin-top:20px;font-size:10px;color:#666;line-height:1.6;text-align:center">
-      房主需在电脑上运行「我的战争-联机.bat」<br>
-      加入方在任何设备打开同一网页即可<br>
-      双方使用自己的存档阵容对决
+      双方使用自己的存档阵容对决<br>
+      <span id="olPlatformHint"></span>
     </div>
   </div>
   
@@ -1362,7 +1365,10 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
       <div id="olRoomCode" style="font-size:32px;color:#3498db;font-weight:bold;letter-spacing:4px;margin:8px 0">----</div>
       <div id="olRoomStatus" style="font-size:12px;color:#2ecc71">等待对手加入...</div>
     </div>
-    <div id="olMyIp" style="font-size:11px;color:var(--text2);margin-bottom:12px"></div>
+    <div id="olMyIp" style="background:linear-gradient(135deg,#1a1a2e,#0a0a1a);border:1px solid #333;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;cursor:pointer" onclick="olCopyIp()" title="点击复制">
+      <div style="color:var(--text2);margin-bottom:4px">告诉对手你的IP和房间号（点击复制）</div>
+      <div id="olIpText" style="color:#3498db;font-size:14px;font-weight:bold;word-break:break-all"></div>
+    </div>
     <button class="med-btn" style="background:linear-gradient(180deg,#c0392b,#96281b);padding:8px 20px" onclick="olLeaveRoom()">离开房间</button>
   </div>
   
@@ -2340,20 +2346,21 @@ function stats(h){
 
 // ===== 战斗力计算 =====
 function calcPower(s){
-  // 有效生命 = HP / (1 - 减伤%)，再开根号压缩HP量级
-  const dr=1-Math.min(0.8,(s.eqDmgReduce||0)/100); // 减伤上限80%
+  // 减伤折算
+  const dr=1-Math.min(0.8,(s.eqDmgReduce||0)/100);
+  // 有效生命：HP×(1/(1-减伤%))，不开根号，给坦克应有的战力
   const ehp=s.hp/dr;
-  const ehpFactor=Math.sqrt(ehp); // 开根号防止高血量英雄战力虚高
-  // 有效攻击 = 攻击 * (1 + 暴率%*暴伤倍率) * 速度系数
-  const critMult=1+(s.crit/100)*s.cdmg;
-  const spdMult=1+s.spd*0.08;
-  const eDmg=s.atk*critMult*spdMult;
-  // 防御折算（防御≈等效减伤，每点防御约等于HP/1000的等效）
-  const defFactor=s.def*Math.sqrt(s.hp/1000);
-  // 其他辅助属性
-  const supFactor=(s.eqHealBoost||0)*4+(s.eqLifesteal||0)*8+(s.eqThorns||0)*3;
+  const hpFactor=ehp*0.12; // 生命贡献（12%系数）
+  // 攻击贡献：基础攻击 × 暴击期望增幅（温和增幅，不是暴击直接乘）
+  const critBoost=1+(s.crit/100)*(s.cdmg-1)*0.5; // 暴击只加暴伤溢出部分的50%
+  const spdBoost=1+s.spd*0.05; // 速度系数降低
+  const atkFactor=s.atk*critBoost*spdBoost*0.7; // 攻击贡献（70%系数）
+  // 防御贡献：防御值 × HP开根号/10，让高防+高血更值钱
+  const defFactor=s.def*Math.sqrt(s.hp/1000)*0.1;
+  // 辅助属性
+  const supFactor=(s.eqHealBoost||0)*3+(s.eqLifesteal||0)*6+(s.eqThorns||0)*2;
   // 综合
-  let p=ehpFactor*0.6+eDmg*0.8+defFactor*0.15+supFactor;
+  let p=hpFactor+atkFactor+defFactor+supFactor;
   // 张绪阳特殊：进场只有1/5血，战斗力按实际血量算
   if(s.id==='zhangxuyang')p=p*0.45;
   return Math.max(1,Math.round(p));
@@ -9826,6 +9833,43 @@ let olMyConfirmed=false;
 let olOpponentConfirmed=false;
 let olSelectedHeroUid=null;
 
+// 一键复制IP+房间号
+function olCopyIp(){
+  const el=document.getElementById('olIpText');
+  if(!el)return;
+  const text=el.textContent;
+  navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板！')).catch(()=>toast('复制失败，请手动复制'));
+}
+
+// 检测WS服务器是否在线
+function olCheckServer(){
+  const checkEl=document.getElementById('olServerCheck');
+  if(!checkEl)return;
+  const host=location.hostname||'localhost';
+  const wsUrl='ws://'+host+':8766';
+  try{
+    const testWs=new WebSocket(wsUrl);
+    let done=false;
+    testWs.onopen=()=>{
+      if(done)return;done=true;
+      checkEl.textContent='✅ 在线';
+      checkEl.style.color='#2ecc71';
+      testWs.close();
+    };
+    testWs.onerror=()=>{
+      if(done)return;done=true;
+      checkEl.textContent='❌ 离线（需在电脑上启动游戏）';
+      checkEl.style.color='#e74c3c';
+    };
+    setTimeout(()=>{
+      if(!done){done=true;testWs.close();checkEl.textContent='⏱ 超时';checkEl.style.color='#e67e22'}
+    },3000);
+  }catch(e){
+    checkEl.textContent='❌ 不可用';
+    checkEl.style.color='#e74c3c';
+  }
+}
+
 function rOnlinePvp(){
   // 重置显示
   document.getElementById('olLobby').style.display='';
@@ -9833,13 +9877,25 @@ function rOnlinePvp(){
   document.getElementById('olSetup').style.display='none';
   document.getElementById('olBattle').style.display='none';
   document.getElementById('olJoinBox').style.display='none';
-  // 显示本机IP提示
   document.getElementById('olMyIp').textContent='';
+  // 检测服务器
+  olCheckServer();
+  // 平台提示
+  const hintEl=document.getElementById('olPlatformHint');
+  if(hintEl){
+    const isMobile='ontouchstart' in window||navigator.maxTouchPoints>0;
+    hintEl.textContent=isMobile?'手机端请选择「加入房间」，电脑端创建房间':'电脑端启动游戏即自动开启联机服务';
+  }
 }
 
 function olShowJoin(){
   const box=document.getElementById('olJoinBox');
   box.style.display=box.style.display==='none'?'':'none';
+  // 自动填入当前页面的hostname（同一WiFi下通常就是房主IP）
+  if(box.style.display!=='none'){
+    const ipEl=document.getElementById('olJoinIp');
+    if(ipEl&&!ipEl.value)ipEl.value=location.hostname||'';
+  }
 }
 
 function olCreateRoom(){
@@ -9908,7 +9964,8 @@ function olHandleMsg(msg){
     document.getElementById('olRoomCode').textContent=msg.code||olRoomCode;
     document.getElementById('olRoomStatus').textContent='等待对手加入...';
     const hostIp=msg.host_ip||location.hostname;
-    document.getElementById('olMyIp').innerHTML=`告诉对手你的IP和房间号：<br><b style="color:#3498db;font-size:14px">${hostIp}</b> · 房间号 <b style="color:#3498db;font-size:14px">${msg.code||olRoomCode}</b>`;
+    const codeStr=msg.code||olRoomCode;
+    document.getElementById('olIpText').textContent=`IP: ${hostIp}  房间号: ${codeStr}`;
     toast('房间已创建');
   }
   
