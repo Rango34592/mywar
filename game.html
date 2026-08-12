@@ -219,8 +219,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .bu .bu-name{font-size:12px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;margin-bottom:2px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .bu .bu-status{font-size:10px;display:flex;gap:3px;justify-content:center;margin-top:1px}
 .bu .hp-w{width:100px;height:7px;background:#111;border-radius:4px;margin-top:3px;overflow:hidden;border:1px solid #333}
-.bu .hp-b{height:100%;border-radius:3px;transition:width .5s ease}
-.hp-g{background:linear-gradient(90deg,#1e8449,#27ae60)}.hp-y{background:linear-gradient(90deg,#b7700a,#d4a846)}.hp-r{background:linear-gradient(90deg,#8b1a1a,#c0392b)}
+.bu .hp-b{height:100%;border-radius:2px;transition:width .5s ease;box-shadow:0 0 4px rgba(0,0,0,.3)}
+.hp-g{background:linear-gradient(90deg,#1e8449,#27ae60);box-shadow:0 0 3px rgba(39,174,96,.6)}.hp-y{background:linear-gradient(90deg,#b7700a,#d4a846);box-shadow:0 0 3px rgba(212,168,70,.6)}.hp-r{background:linear-gradient(90deg,#8b1a1a,#c0392b);box-shadow:0 0 3px rgba(192,57,43,.6)}
 .bu .hp-t{font-size:10px;color:var(--text2);margin-top:1px}
 
 /* World Boss unit — bigger card */
@@ -635,7 +635,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .bu .bu-star{font-size:6px!important;letter-spacing:0!important;margin-bottom:0!important}
   .bu .bu-name{font-size:7px!important;max-width:44px!important;margin-bottom:0!important}
   .bu .bu-status{font-size:6px!important;gap:1px!important}
-  .bu .hp-w{width:40px!important;height:4px!important;margin-top:1px!important}
+  .bu .hp-w{width:42px!important;height:6px!important;margin-top:1px!important;border:1px solid #555!important;border-radius:3px!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
+  .bu .hp-b{border-radius:1px!important;transition:width .4s ease!important}
   .bu .hp-t{font-size:6px!important;margin-top:0!important}
   .b-vs{font-size:16px!important;letter-spacing:0!important}
   .bu.wb-boss-unit{width:70px!important;height:90px!important;border-width:2px!important}
@@ -691,7 +692,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .bu .bu-name{font-size:6px!important;max-width:36px!important}
   .bu .bu-star{font-size:5px!important}
   .bu .bu-status{font-size:5px!important}
-  .bu .hp-w{width:34px!important;height:3px!important}
+  .bu .hp-w{width:36px!important;height:5px!important;border:1px solid #555!important;border-radius:3px!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
+  .bu .hp-b{border-radius:1px!important}
   .bu .hp-t{font-size:5px!important}
   .b-col{gap:2px!important}
   .bs-rows{gap:4px!important}
@@ -4196,9 +4198,9 @@ function mkUnit(u,side){
   div.innerHTML=`
     ${starHtml}
     <div class="bu-name">${u.name}</div>
-    ${!u.isE?`<img src="${H[u.id].img}" alt="${u.name}" onerror="this.style.display='none'">`:
+    ${!u.isE?`<img src="${imgUrl(H[u.id].img)}" alt="${u.name}" onerror="this.style.display='none'">`:
       (u.img&&!u.img.includes('/')?`<div style="font-size:${isWBBoss?'56px':'48px'};line-height:1;filter:drop-shadow(0 0 8px rgba(255,165,0,.5))">${u.img}</div>`:
-      `<img src="${u.img}" alt="${u.name}" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','${u._hidden?'<div class=e-icon>❓</div>':'<div class=e-icon>👹</div>'}')">`)}
+      `<img src="${imgUrl(u.img)}" alt="${u.name}" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','${u._hidden?'<div class=e-icon>❓</div>':'<div class=e-icon>👹</div>'}')">`)}
     ${statusHtml}
     <div class="hp-w"><div class="hp-b ${hc}" style="width:${pct}%"></div></div>
     <div class="hp-t">${isWBBoss?`已造成 <span style="color:#ff4500">${formatDmg(B.wbDmgDealt||0)}</span>`:`${Math.max(0,Math.round(u.hp))}/${u.maxHp}`}</div>`;
