@@ -402,7 +402,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   body{overflow:hidden}
   .screen{height:calc(100vh - var(--mobile-nav-h))!important;min-height:0!important;overflow:hidden!important;padding-bottom:0!important}
   .screen.active{display:flex!important;flex-direction:column!important}
-  #screen-onlinepvp{overflow-y:auto!important}
+  #screen-onlinepvp{overflow-y:auto!important;flex-shrink:0!important}
+  #screen-onlinepvp>div{flex-shrink:0!important}
   
   /* === Nav: compact === */
   #nav{height:var(--mobile-nav-h)!important;gap:1px;padding:0 2px}
@@ -679,7 +680,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   :root{--mobile-nav-h:36px}
   .med-title{font-size:12px!important;padding:2px 6px!important;margin-bottom:2px!important}
   .screen{height:calc(100vh - var(--mobile-nav-h))!important}
-  #screen-onlinepvp{overflow-y:auto!important}
+  #screen-onlinepvp{overflow-y:auto!important;flex-shrink:0!important}
+  #screen-onlinepvp>div{flex-shrink:0!important}
   #nav{height:36px!important}
   .ns-lbl{font-size:7px!important}
   .ns-ring{font-size:14px!important;width:18px!important;height:18px!important}
