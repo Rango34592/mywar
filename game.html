@@ -9871,6 +9871,10 @@ function olCreateRoom(){
   // 创建PeerJS实例，ID=房间号前缀+随机码，确保唯一
   const peerId='mywar-room-'+code;
   olPeer=new Peer(peerId,{
+    host:location.hostname||'localhost',
+    port:9000,
+    path:'/mywar',
+    secure:location.protocol==='https:',
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
   });
   
@@ -9924,6 +9928,10 @@ function olJoinRoom(){
   
   const peerId='mywar-room-'+code;
   olPeer=new Peer({
+    host:location.hostname||'localhost',
+    port:9000,
+    path:'/mywar',
+    secure:location.protocol==='https:',
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
   });
   
