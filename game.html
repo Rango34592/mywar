@@ -9913,20 +9913,29 @@ function olCreateRoom(){
   olOpponentConfirmed=false;
   toast('正在创建房间...');
   
-  // 创建PeerJS实例，ID=房间号前缀+随机码，确保唯一
   const peerId='mywar-room-'+code;
   const olHost=olGetHost();
   const olPort=olGetPort();
+  const isFile=location.protocol==='file:';
+  
   olPeer=new Peer(peerId,{
     host:olHost,
     port:olPort,
     path:'/mywar',
-    secure:location.protocol==='https:',
+    secure:false,
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
   });
   
+  // 连接超时检测
+  const openTimer=setTimeout(()=>{
+    if(olPeer&&!olPeer.destroyed){
+      toast('连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.手机和电脑在同一WiFi');
+      olCleanup();
+    }
+  },8000);
+  
   olPeer.on('open',()=>{
-    // 房间创建成功
+    clearTimeout(openTimer);
     document.getElementById('olLobby').style.display='none';
     document.getElementById('olRoom').style.display='';
     document.getElementById('olRoomCode').textContent=code;
@@ -9937,22 +9946,23 @@ function olCreateRoom(){
   });
   
   olPeer.on('connection',conn=>{
-    // 有人连入
     olConn=conn;
     olSetupConn(conn);
     toast('对手已加入！');
     document.getElementById('olRoomStatus').textContent='对手已加入！准备布阵...';
     document.getElementById('olRoomStatus').style.color='#2ecc71';
-    // 生成我的队伍数据并进入布阵
     olGenerateMyData();
     olSend({type:'setup',data:olMyData,confirmed:false});
     setTimeout(()=>olShowSetup(),500);
   });
   
   olPeer.on('error',err=>{
+    clearTimeout(openTimer);
     console.error('PeerJS error',err);
     if(err.type==='unavailable-id'){
       toast('房间号已存在，请重试');
+    }else if(err.type==='network'||err.type==='server-error'){
+      toast('连不上信令服务器('+olHost+':'+olPort+')，请检查IP和端口');
     }else{
       toast('连接错误: '+err.type);
     }
@@ -9960,7 +9970,11 @@ function olCreateRoom(){
   });
   
   olPeer.on('disconnected',()=>{
-    toast('信令服务器断开');
+    // 尝试自动重连
+    if(olPeer&&!olPeer.destroyed){
+      toast('信令断开，尝试重连...');
+      setTimeout(()=>{if(olPeer&&!olPeer.destroyed)olPeer.reconnect()},2000);
+    }
   });
 }
 
@@ -9976,27 +9990,37 @@ function olJoinRoom(){
   const peerId='mywar-room-'+code;
   const olHost=olGetHost();
   const olPort=olGetPort();
+  
   olPeer=new Peer({
     host:olHost,
     port:olPort,
     path:'/mywar',
-    secure:location.protocol==='https:',
+    secure:false,
     config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}
   });
   
+  // 连接超时检测
+  const openTimer=setTimeout(()=>{
+    if(olPeer&&!olPeer.destroyed){
+      toast('连接信令服务器超时，请检查：1.电脑已运行启动脚本 2.IP地址填写正确 3.手机和电脑在同一WiFi');
+      olCleanup();
+    }
+  },8000);
+  
   olPeer.on('open',()=>{
-    // 连接到房主
+    clearTimeout(openTimer);
     const conn=olPeer.connect(peerId,{reliable:true});
     olConn=conn;
     olSetupConn(conn);
   });
   
   olPeer.on('error',err=>{
+    clearTimeout(openTimer);
     console.error('PeerJS error',err);
     if(err.type==='peer-unavailable'){
       toast('房间不存在，请检查房间号');
-    }else if(err.type==='network'){
-      toast('网络错误，请检查网络连接');
+    }else if(err.type==='network'||err.type==='server-error'){
+      toast('连不上信令服务器('+olHost+':'+olPort+')，请检查IP和端口');
     }else{
       toast('连接错误: '+err.type);
     }
@@ -10004,7 +10028,10 @@ function olJoinRoom(){
   });
   
   olPeer.on('disconnected',()=>{
-    toast('信令服务器断开');
+    if(olPeer&&!olPeer.destroyed){
+      toast('信令断开，尝试重连...');
+      setTimeout(()=>{if(olPeer&&!olPeer.destroyed)olPeer.reconnect()},2000);
+    }
   });
 }
 
