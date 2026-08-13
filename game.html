@@ -4255,7 +4255,8 @@ function startLevel(lv){
     wave:1,maxWaves:dblWave?2:1,waveEnemies:dblWave?[genEnemies(lv)]:[]};
   B.allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
-    if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽    if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
+    if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽
+    if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
   });
   // 邓力凯被动：全体友军速度+1
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
@@ -7475,7 +7476,8 @@ function startArena(){
     shieldFirst:true,busy:false,paused:false,stats:{}};
   B.allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
-    if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽    if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
+    if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽
+    if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
   });
   // 敌方英雄特殊初始化
   B.enemies.forEach(e=>{
@@ -10120,7 +10122,8 @@ function startPvpBattle(){
   B={allies,enemies,round:1,order:[],lv:-1,isPvp:true,log:[],done:false,
     shieldFirst:true,busy:false,paused:false,stats:{}};
   B.allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;});
-  B.enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;  if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
+  B.enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
+  if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(B.enemies.some(e=>e.hp>0&&e.id==='denglikai'))B.enemies.forEach(e=>{e.spd+=1;e.defBuff=(e.defBuff||0)+Math.round(e.def*0.2)});
   if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1});
   if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1});
@@ -10818,7 +10821,7 @@ function olRunHostBattle(){
   
   // 初始化被动
   allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;});
-  enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;  
+  enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
   G.auto=true;
   B={allies,enemies,round:1,order:[],lv:-1,isPvp:true,log:[],done:false,
     shieldFirst:true,busy:false,paused:false,stats:{},isOnlinePvp:true};
