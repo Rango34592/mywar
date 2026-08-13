@@ -1878,7 +1878,7 @@ const H = {
   shield:{id:'shield',name:'盾狗',img:'英雄图片/盾狗.jpg',atk:100,def:45,hp:1200,cdmg:1.5,crit:5,spd:1,
     sk:'铁壁嘲讽',skDesc:'嘲讽所有敌人，恢复一半总生命',skCd:60,
     ps:'开局铁壁',psDesc:'前三回合防御力翻倍',row:'front',rng:'melee'},
-  priest:{id:'priest',name:'牧师',img:'英雄图片/牧师.jpg',atk:100,def:20,hp:800,cdmg:1.5,crit:5,spd:2,
+  priest:{id:'priest',name:'牧师',img:'英雄图片/牧师.jpg',atk:100,def:20,hp:1000,cdmg:1.5,crit:5,spd:2,
     sk:'群体治愈',skDesc:'恢复所有队友等量于自己2倍攻击的血量',skCd:60,
     ps:'圣光庇护',psDesc:'每回合结束时，治疗血量最低的友军15%最大生命',row:'back',rng:'ranged'},
   miner:{id:'miner',name:'矿工',img:'英雄图片/矿工.jpg',atk:130,def:30,hp:900,cdmg:1.5,crit:5,spd:2,
@@ -1898,7 +1898,7 @@ const H = {
     sk:'横排猛击',skDesc:'对一排敌人造成2.5倍伤害，50%概率眩晕2回合',skCd:50,
     ps:'意志坚定',psDesc:'无视一切负面效果',row:'front',rng:'melee'},
   tangxi:{id:'tangxi',name:'糖稀',img:'英雄图片/糖稀.jpg',atk:120,def:10,hp:1000,cdmg:1.5,crit:5,spd:3,
-    sk:'流血连斩',skDesc:'对任意一个敌人造成4段伤害，敌人流血3回合（每回合受糖稀攻击等量真伤）',skCd:60,
+    sk:'流血连斩',skDesc:'对任意一个敌人造成4段伤害（每段1.3倍），敌人流血3回合（每回合受糖稀1.5倍攻击真伤）',skCd:60,
     ps:'嗜血之刃',psDesc:'普攻75%概率触发敌人流血2回合',row:'front',rng:'melee'},
   py:{id:'py',name:'PY',img:'英雄图片/PY.jpg',atk:140,def:20,hp:1350,cdmg:1.5,crit:5,spd:2,
     sk:'重锤猛击',skDesc:'对一个敌人造成3.5倍伤害，70%概率眩晕2回合',skCd:50,
@@ -1918,7 +1918,7 @@ const H = {
   songdi:{id:'songdi',name:'宋迪',img:'英雄图片/宋迪.jpg',atk:95,def:30,hp:1300,cdmg:1.5,crit:5,spd:1,
     sk:'固守壁垒',skDesc:'恢复6倍攻击的生命，防御提升100%持续2回合',skCd:50,
     ps:'荆棘反甲',psDesc:'受到伤害时反击（1倍伤害，无视防御）',row:'front',rng:'melee'},
-  zhangxz:{id:'zhangxz',name:'张绪哲',img:'英雄图片/张绪哲.jpg',atk:90,def:20,hp:600,cdmg:2.5,crit:20,spd:4,
+  zhangxz:{id:'zhangxz',name:'张绪哲',img:'英雄图片/张绪哲.jpg',atk:110,def:20,hp:750,cdmg:2.5,crit:20,spd:4,
     sk:'乱影八斩',skDesc:'对一排敌人造成总共8次伤害，随机分配',skCd:50,
     ps:'后排猎杀',psDesc:'普攻和技能优先索敌后排',row:'back',rng:'ranged'},
   zhangnv:{id:'zhangnv',name:'张女士',img:'英雄图片/张女士.jpg',atk:130,def:20,hp:1000,cdmg:6.0,crit:1,spd:3,
@@ -1955,13 +1955,13 @@ const H = {
   shanxiyuge:{id:'shanxiyuge',name:'陕西宇哥',img:'英雄图片/陕西宇哥.jpg',atk:100,def:20,hp:1700,cdmg:1.5,crit:5,spd:1,
     sk:'坚壁回复',skDesc:'获得30%减伤2回合，恢复20%最大生命',skCd:60,
     ps:'反击沉默',psDesc:'受击20%概率沉默攻击者2回合',row:'front',rng:'melee'},
-  yumm:{id:'yumm',name:'玉面手雷王',img:'英雄图片/玉面手雷王.jpg',atk:100,def:15,hp:900,cdmg:2.0,crit:5,spd:3,
+  yumm:{id:'yumm',name:'玉面手雷王',img:'英雄图片/玉面手雷王.jpg',atk:120,def:15,hp:900,cdmg:2.0,crit:5,spd:3,
     sk:'后排轰炸',skDesc:'对后排造成2倍伤害，50%概率灼烧2回合（2倍攻击伤害）',skCd:60,
     ps:'投弹',psDesc:'回合结束随机对2个敌人造成1倍伤害(后排优先)',row:'back',rng:'ranged'},
   fuqian:{id:'fuqian',name:'付骞',img:'英雄图片/付骞.jpg',atk:100,def:15,hp:900,cdmg:1.5,crit:10,spd:3,
     sk:'禁疗打击',skDesc:'对3个敌人造成2倍伤害，降低80%治疗3回合',skCd:60,
     ps:'惩罚治疗',psDesc:'敌军获得治疗时，攻击一次',row:'back',rng:'ranged'},
-  denglikai:{id:'denglikai',name:'邓力凯',img:'英雄图片/邓力凯.jpg',atk:80,def:10,hp:800,cdmg:1.5,crit:5,spd:2,
+  denglikai:{id:'denglikai',name:'邓力凯',img:'英雄图片/邓力凯.jpg',atk:80,def:20,hp:1000,cdmg:1.5,crit:5,spd:2,
     sk:'激励冲锋',skDesc:'恢复最低友军70%生命，让攻击最高友军立即行动',skCd:60,
     ps:'全军加速',psDesc:'全体友军速度+1，防御+20%',row:'back',rng:'ranged'},
   caolaou:{id:'caolaou',name:'曹老鸥',img:'英雄图片/曹老鸥.jpg',atk:90,def:25,hp:1300,cdmg:1.5,crit:5,spd:3,
@@ -2003,7 +2003,7 @@ const H = {
   shenmilaozhe:{id:'shenmilaozhe',name:'神秘老者',img:'英雄图片/神秘老者.jpg',atk:85,def:10,hp:850,cdmg:2.0,crit:5,spd:2,
     sk:'古神加护',skDesc:'清除友方所有负面，提升30%攻击和15%速度2回合，恢复所有友军2倍攻击血量和50%速度',skCd:55,
     ps:'时间扭曲',psDesc:'敌人使用技能后20%概率使其技能CD+1回合',row:'back',rng:'ranged'},
-  ziranwupo:{id:'ziranwupo',name:'自然巫婆',img:'英雄图片/自然巫婆.jpg',atk:95,def:15,hp:900,cdmg:1.5,crit:5,spd:2,
+  ziranwupo:{id:'ziranwupo',name:'自然巫婆',img:'英雄图片/自然巫婆.jpg',atk:110,def:15,hp:900,cdmg:1.5,crit:5,spd:2,
     sk:'自然恩泽',skDesc:'恢复所有友军3倍攻击血量，生命最低友军防御+20%2回合',skCd:50,
     ps:'自然之力',psDesc:'友军每回合恢复1倍攻击生命；自身无视负面效果',row:'back',rng:'ranged'}
 };
@@ -6886,14 +6886,14 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       for(let i=0;i<4;i++){
         if(actual.hp<=0){const nxt=enemies.find(e=>e.hp>0);if(!nxt)break;actual=nxt}
         const def=actual.def+(actual.defBuff||0);
-        let dmg=Math.max(1,Math.round(actor.atk*1)-def);
+        let dmg=Math.max(1,Math.round(actor.atk*1.3)-def);
         if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
         const rd=applyDmg(actor,actual,dmg);total+=rd;
         await animClass(actual.uid,'anim-hit',200);
         showDmg(actual.uid,rd,'norm');
         await wait(150/G.spd);
       }
-      addBleed(actual,Math.round(actor.atk),3);
+      addBleed(actual,Math.round(actor.atk*1.5),3);
       B.log.push(`<span style="color:var(--red)">${actor.name} 流血连斩 → ${total}总伤害，${actual.name} 流血3回合</span>`);break;
     }
     // ===== PY：重锤猛击 =====
