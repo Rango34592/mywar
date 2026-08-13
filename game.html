@@ -1970,42 +1970,9 @@ const H = {
   daxiong:{id:'daxiong',name:'达兄',img:'英雄图片/达兄.jpg',atk:90,def:10,hp:900,cdmg:1.5,crit:5,spd:2,
     sk:'虚弱诅咒',skDesc:'对敌方全体造成1倍伤害，降低90%防御和99%治疗量持续2回合',skCd:60,
     ps:'减速光环',psDesc:'所有敌军速度-1',row:'back',rng:'ranged'},
-  zhangxuyang:{id:'zhangxuyang',name:'张绪阳',img:'英雄图片/张绪阳.jpg',atk:120,def:10,hp:800,cdmg:2.0,crit:10,spd:4,
-    sk:'穿云箭',skDesc:'对敌方血量最低单位造成3倍伤害，击杀则技能CD减半',skCd:50,
-    ps:'射术精湛',psDesc:'普攻30%概率额外攻击一次',row:'back',rng:'ranged'},
-  birdman:{id:'birdman',name:'BirdMan',img:'英雄图片/BirdMan.jpg',atk:100,def:25,hp:1200,cdmg:1.5,crit:5,spd:1,
-    sk:'碎甲重击',skDesc:'对单体造成4倍伤害，减少敌方99%防御',skCd:60,
-    ps:'毒羽',psDesc:'攻击BirdMan的敌人50%中毒2回合',row:'front',rng:'melee'},
-  mage:{id:'mage',name:'马哥',img:'怪物图片/马哥.jpg',atk:110,def:15,hp:1000,cdmg:1.5,crit:5,spd:4,
-    sk:'狂暴冲锋',skDesc:'攻击+120%持续3回合，减10%生命，立刻普攻',skCd:60,
-    ps:'血怒',psDesc:'每失去5%生命，暴击率+2%',row:'front',rng:'melee'},
-  jimmy:{id:'jimmy',name:'Jimmy',img:'英雄图片/Jimmy.jpg',atk:170,def:25,hp:1400,cdmg:2.0,crit:10,spd:3,
-    sk:'致命斩击',skDesc:'对单体造成4倍伤害，流血2回合',skCd:60,
-    ps:'狂暴',psDesc:'血量低于一半时，技能变成攻击两个目标',row:'front',rng:'melee'},
-  caizong:{id:'caizong',name:'蔡总',img:'英雄图片/蔡总.jpg',atk:120,def:20,hp:1200,cdmg:1.5,crit:5,spd:2,
-    sk:'全体护盾',skDesc:'给所有队友1.5倍攻击血盾',skCd:60,
-    ps:'庇护',psDesc:'每回合开始给生命最低队友1.5倍攻击血盾(可叠加)',row:'back',rng:'ranged'},
-  laot:{id:'laot',name:'老T',img:'英雄图片/老T.jpg',atk:100,def:10,hp:1000,cdmg:1.5,crit:5,spd:4,
-    sk:'斩杀',skDesc:'对2个目标造成2倍伤害，再真伤敌人当前生命1/4',skCd:60,
-    ps:'破甲',psDesc:'攻击50%概率破甲(无视防御)',row:'back',rng:'ranged'},
-  ayue:{id:'ayue',name:'阿岳',img:'英雄图片/阿岳.jpg',atk:150,def:20,hp:1300,cdmg:2.0,crit:1,spd:2,
-    sk:'圣光斩',skDesc:'对2个敌人造成2倍伤害，50%概率眩晕2回合',skCd:60,
-    ps:'满血狂暴',psDesc:'满血时攻击力+80%',row:'front',rng:'melee'},
-  lanxiangui:{id:'lanxiangui',name:'兰显贵',img:'英雄图片/兰显贵.jpg',atk:100,def:30,hp:1300,cdmg:1.5,crit:5,spd:2,
-    sk:'破阵庇护',skDesc:'对一排敌人造成1.5倍伤害，给己方生命最低两个队友2倍攻击力护盾',skCd:50,
-    ps:'不屈意志',psDesc:'受到致命伤时锁血2回合（每场1次）',row:'front',rng:'melee'},
-  shenmilaofu:{id:'shenmilaofu',name:'神秘老妇',img:'英雄图片/神秘老妇.jpg',atk:85,def:15,hp:1000,cdmg:1.5,crit:5,spd:2,
-    sk:'生命之泉',skDesc:'立即恢复全体2倍攻击血量，所有友军防御+10%1回合，回合结束恢复1倍攻击血量2回合',skCd:50,
-    ps:'净化之息',psDesc:'每回合清除3个友军负面状态并恢复2倍攻击生命',row:'back',rng:'ranged'},
-  lanxianying:{id:'lanxianying',name:'兰显英',img:'英雄图片/兰显英.jpg',atk:110,def:15,hp:850,cdmg:1.5,crit:5,spd:2,
-    sk:'圣盾庇佑',skDesc:'给友方后排2回合无敌护盾',skCd:90,
-    ps:'守护之灵',psDesc:'可以防止一次致命伤害，恢复自己和所有队友1倍攻击生命',row:'back',rng:'ranged'},
-  shenmilaozhe:{id:'shenmilaozhe',name:'神秘老者',img:'英雄图片/神秘老者.jpg',atk:85,def:10,hp:850,cdmg:2.0,crit:5,spd:2,
-    sk:'古神加护',skDesc:'清除友方所有负面，提升30%攻击和15%速度2回合，恢复所有友军2倍攻击血量和50%速度',skCd:55,
-    ps:'时间扭曲',psDesc:'敌人使用技能后20%概率使其技能CD+1回合',row:'back',rng:'ranged'},
-  ziranwupo:{id:'ziranwupo',name:'自然巫婆',img:'英雄图片/自然巫婆.jpg',atk:110,def:15,hp:900,cdmg:1.5,crit:5,spd:2,
-    sk:'自然恩泽',skDesc:'恢复所有友军3倍攻击血量，生命最低友军防御+20%2回合',skCd:50,
-    ps:'自然之力',psDesc:'友军每回合恢复1倍攻击生命；自身无视负面效果',row:'back',rng:'ranged'},
+zhangxuyang:{id:'zhangxuyang',name:'张绪阳',img:'英雄图片/张绪阳.jpg',atk:50,def:0,hp:3200,cdmg:4.0,crit:50,spd:4,
+    sk:'献祭复活',skDesc:'扣除1/4血量，复活一个友军(15%生命)',skCd:60,
+    ps:'治疗翻倍',psDesc:'获得的治疗量翻倍，进场只有生命上限1/5',row:'back',rng:'ranged'},
   // ===== 影视传奇英雄 =====
   madongxi:{id:'madongxi',name:'马东锡',img:'英雄图片/马东锡.jpg',atk:140,def:30,hp:1300,cdmg:2.0,crit:10,spd:2,
     sk:'一拳定罪',skDesc:'对单体3.5倍伤害，60%眩晕2回合',skCd:60,
@@ -2018,7 +1985,10 @@ const H = {
     ps:'即兴战斗',psDesc:'被攻击时25%闪避并反击0.5倍伤害',row:'front',rng:'melee'},
   lixiaolong:{id:'lixiaolong',name:'李小龙',img:'英雄图片/李小龙.jpg',atk:130,def:10,hp:900,cdmg:2.5,crit:20,spd:5,
     sk:'寸劲',skDesc:'对单体3.5倍真实伤害(无视防御)',skCd:70,
-    ps:'截拳道',psDesc:'暴击时追加1倍攻击真实伤害',row:'front',rng:'melee'}
+    ps:'截拳道',psDesc:'暴击时追加1倍攻击真实伤害',row:'front',rng:'melee'},
+  songruilin:{id:'songruilin',name:'宋瑞麟',img:'英雄图片/宋瑞麟.jpg',atk:120,def:10,hp:800,cdmg:2.0,crit:10,spd:4,
+    sk:'穿云箭',skDesc:'对敌方血量最低单位造成3倍伤害，击杀则技能CD减半',skCd:50,
+    ps:'射术精湛',psDesc:'普攻30%概率额外攻击一次',row:'back',rng:'ranged'}
 };
 
 // ============= EQUIPMENT DEFINITIONS =============
@@ -2102,7 +2072,7 @@ const RELICS={
   lanski:{name:'书本的力量',icon:'📚',desc:'攻击+5% 防御+5%',atkPct:.05,defPct:.05},
   yuedeng:{name:'屁王庇佑',icon:'💨',desc:'毒伤+10%',poisonPct:.1},
   mage:{name:'手办',icon:'🗿',desc:'暴击几率+7%',critFlat:7},
-  zhangxuyang:{name:'弹弓',icon:'🎯',desc:'普攻连射概率+15%',comboPct:.15},
+  zhangxuyang:{name:'尿不湿',icon:'🧷',desc:'生命+5%',hpPct:.05},
   denglikai:{name:'手机',icon:'📲',desc:'攻击50%概率连击',comboPct:.5},
   fuqian:{name:'德州扑克',icon:'🃏',desc:'攻击+5%',atkPct:.05},
   dongrab:{name:'BeatBox器械',icon:'🎤',desc:'毒伤翻倍',poisonDouble:true},
@@ -2128,7 +2098,8 @@ const RELICS={
   madongxi:{name:'警徽',icon:'🎖️',desc:'对眩晕敌人伤害额外+25%',stunDmgPct:.25},
   yewen:{name:'木人桩',icon:'🪵',desc:'闪避反击伤害+50%',counterBoost:.5},
   chenglong:{name:'旱冰鞋',icon:'🛼',desc:'闪避概率+8%',dodgePct:.08},
-  lixiaolong:{name:'双截棍',icon:'🏏',desc:'暴击真伤额外+0.5倍',critTrueDmgFlat:.5}
+  lixiaolong:{name:'双截棍',icon:'🏏',desc:'暴击真伤额外+0.5倍',critTrueDmgFlat:.5},
+  songruilin:{name:'弹弓',icon:'🎯',desc:'普攻连射概率+15%',comboPct:.15}
 };
 function hasRelic(heroId,relicFlag){return relicFlag&&RELICS[heroId]}
 function relicDesc(heroId){const r=RELICS[heroId];return r?`${r.icon} ${r.name}：${r.desc}`:'无专属圣遗物'}
@@ -2408,6 +2379,8 @@ function calcPower(s){
   const supFactor=(s.eqHealBoost||0)*3+(s.eqLifesteal||0)*6+(s.eqThorns||0)*2;
   // 综合
   let p=hpFactor+atkFactor+defFactor+supFactor;
+  // 张绪阳特殊：进场只有1/5血，战斗力按实际血量算
+  if(s.id==='zhangxuyang')p=p*0.45;
   return Math.max(1,Math.round(p));
 }
 // 计算英雄战斗力（传入英雄对象h）
@@ -4256,6 +4229,7 @@ function startLevel(lv){
   B.allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
     if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽
+    if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5); // 张绪阳进场只有1/5血
     if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
   });
   // 邓力凯被动：全体友军速度+1
@@ -5223,6 +5197,7 @@ function applyDmg(actor,target,rawDmg,_noReflect){
 function applyHeal(target,rawHeal){
   let h=rawHeal;
   if(target.healReduceAmt>0){const orig=h;h=Math.round(h*(1-target.healReduceAmt));if(orig!==h)B.log.push(`<span style="color:#e74c3c">${target.name} 被减疗！治疗${orig}→${h}</span>`)}
+  if(target.id==='zhangxuyang')h*=2; // 治疗翻倍被动
   // 兰斯基被动：我方治疗量+50%
   if(!target.isE&&B.allies.some(a=>a.hp>0&&a.id==='lanski'))h=Math.round(h*1.5);
   if(target.isE&&B.enemies.some(e=>e.hp>0&&e.id==='lanski'))h=Math.round(h*1.5);
@@ -5463,8 +5438,8 @@ async function execAttackAnim(actor,allies,enemies,label){
     }
     checkKill(actor,actual,allies);
   }
-  // 张绪阳被动：普攻30%概率额外攻击一次（弹弓圣遗物+15%）
-  if(actor.id==='zhangxuyang'&&actor.hp>0&&actual.hp>0&&Math.random()<(0.3+(actor.relic&&actor._relicId==='zhangxuyang'?0.15*(actor.relicMult||1):0))){
+  // 宋瑞麟被动：普攻30%概率额外攻击一次（弹弓圣遗物+15%）
+  if(actor.id==='songruilin'&&actor.hp>0&&actual.hp>0&&Math.random()<(0.3+(actor.relic&&actor._relicId==='songruilin'?0.15*(actor.relicMult||1):0))){
     B.log.push(`<span style="color:#f39c12">${actor.name} 射术精湛！连射！</span>`);
     await wait(200/G.spd);
     let eAtk3=ea(actor);
@@ -6284,8 +6259,8 @@ function findTarget(actor,enemies){
   // 标记目标：全队集火（不仅标记者本人）
   const anyMarked=alive.filter(e=>e.marked>0);
   if(anyMarked.length)return anyMarked[0];
-  // 张绪阳被动：优先攻击血量最低敌人
-  if(actor.id==='zhangxuyang'){
+  // 宋瑞麟被动：优先攻击血量最低敌人
+  if(actor.id==='songruilin'){
     return alive.reduce((a,b)=>a.hp<b.hp?a:b);
   }
   // 后排优先英雄
@@ -6764,19 +6739,10 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       screenFlash('purple');shakeScreen();B.log.push(`<span style="color:var(--red)">${actor.name} 虚弱诅咒！${total}总伤害</span>`);break;
     }
     case 'zhangxuyang':{
-      // 穿云箭：对血量最低敌人3倍伤害，击杀则CD减半
-      const alive=enemies.filter(e=>e.hp>0);
-      if(!alive.length)break;
-      const tgt=alive.reduce((a,b)=>a.hp<b.hp?a:b);
-      const actual=resolveTaunt(tgt,enemies);
-      const def=actual.def+(actual.defBuff||0)+(actual.defBuff2||0);
-      let dmg=Math.max(1,Math.round(actor.atk*3)-Math.max(0,def));
-      if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
-      const rd=applyDmg(actor,actual,dmg);
-      await animClass(actual.uid,'anim-hit',400);showDmg(actual.uid,rd,'skill');
-      if(actual.hp<=0){actor.skCd=Math.ceil(actor.skCd/2);B.log.push(`<span style="color:var(--red)">${actor.name} 穿云箭 → ${actual.name} ${rd}伤害(击杀！CD减半)</span>`)}
-      else{B.log.push(`<span style="color:var(--red)">${actor.name} 穿云箭 → ${actual.name} ${rd}伤害</span>`)}
-      break;
+      const hpCost=Math.round(actor.maxHp*0.25);actor.hp-=hpCost;
+      const dead=allies.filter(a=>a.hp<=0);
+      if(dead.length){dead[0].hp=Math.round(dead[0].maxHp*0.15);dead[0].revived=true;bHeal(actor.uid,dead[0].hp);B.log.push(`<span style="color:var(--red)">${dead[0].name} 被复活！</span>`)}
+      B.log.push(`<span style="color:var(--red)">${actor.name} 生命献祭！</span>`);break;
     }
     case 'birdman':{
       const tgt=findTarget(actor,enemies);if(!tgt)break;
@@ -7113,6 +7079,22 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       const rd=applyDmg(actor,actual,dmg,true); // true=无视防御
       await animClass(actual.uid,'anim-hit',400);shakeScreen();showDmg(actual.uid,rd,'skill');
       B.log.push(`<span style="color:var(--red)">${actor.name} 寸劲 → ${actual.name} ${rd}真实伤害</span>`);break;
+    }
+    // ===== 宋瑞麟：穿云箭 =====
+    case 'songruilin':{
+      // 对血量最低敌人3倍伤害，击杀则CD减半
+      const alive=enemies.filter(e=>e.hp>0);
+      if(!alive.length)break;
+      const tgt=alive.reduce((a,b)=>a.hp<b.hp?a:b);
+      const actual=resolveTaunt(tgt,enemies);
+      const def=actual.def+(actual.defBuff||0)+(actual.defBuff2||0);
+      let dmg=Math.max(1,Math.round(actor.atk*3)-Math.max(0,def));
+      if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
+      const rd=applyDmg(actor,actual,dmg);
+      await animClass(actual.uid,'anim-hit',400);showDmg(actual.uid,rd,'skill');
+      if(actual.hp<=0){actor.skCd=Math.ceil(actor.skCd/2);B.log.push(`<span style="color:var(--red)">${actor.name} 穿云箭 → ${actual.name} ${rd}伤害(击杀！CD减半)</span>`)}
+      else{B.log.push(`<span style="color:var(--red)">${actor.name} 穿云箭 → ${actual.name} ${rd}伤害</span>`)}
+      break;
     }
     default:{
       // Fallback: generic strong attack
@@ -7477,6 +7459,7 @@ function startArena(){
   B.allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
     if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽
+    if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5); // 张绪阳进场只有1/5血
     if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
   });
   // 敌方英雄特殊初始化
@@ -7644,7 +7627,7 @@ function startTitanBattle(){
     shieldFirst:true,busy:false,paused:false,stats:{}};
   B.allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
-    if(a.id==='sange')a.taunt=true,a.tauntPerm=true;  });
+    if(a.id==='sange')a.taunt=true,a.tauntPerm=true;if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
   B.enemies.forEach(e=>{
     if(e.id==='shield')e.defBuff=e.def;
     if(e.id==='sange')e.taunt=true,e.tauntPerm=true;    if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true;
@@ -7980,7 +7963,7 @@ function startWorldBossBattle(){
   // Hero passive init
   B.allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
-    if(a.id==='sange')a.taunt=true,a.tauntPerm=true;  });
+    if(a.id==='sange')a.taunt=true,a.tauntPerm=true;if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1;});
   if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
@@ -8968,7 +8951,7 @@ function startRealm(){
   // Apply start passives
   allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
-    if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}  });
+    if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
   if(allies.some(a=>a.hp>0&&a.id==='denglikai'))allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(allies.some(a=>a.hp>0&&a.id==='zhangjihua'))allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(allies.some(a=>a.hp>0&&a.id==='dongrab'))allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
@@ -9254,7 +9237,7 @@ function startEndless(){
   // Apply start passives
   allies.forEach(a=>{
     if(a.id==='shield')a.defBuff=a.def;
-    if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}  });
+    if(a.id==='sange'){a.taunt=true;a.tauntPerm=true}if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
   if(allies.some(a=>a.hp>0&&a.id==='denglikai'))allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(allies.some(a=>a.hp>0&&a.id==='zhangjihua'))allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(allies.some(a=>a.hp>0&&a.id==='dongrab'))allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
@@ -10121,8 +10104,8 @@ function startPvpBattle(){
   if(!allies.length||!enemies.length){toast('阵容无效！');return}
   B={allies,enemies,round:1,order:[],lv:-1,isPvp:true,log:[],done:false,
     shieldFirst:true,busy:false,paused:false,stats:{}};
-  B.allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;});
-  B.enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
+  B.allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
+  B.enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='zhangxuyang')e.hp=Math.round(e.maxHp/5);if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(B.enemies.some(e=>e.hp>0&&e.id==='denglikai'))B.enemies.forEach(e=>{e.spd+=1;e.defBuff=(e.defBuff||0)+Math.round(e.def*0.2)});
   if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1});
@@ -10820,8 +10803,8 @@ function olRunHostBattle(){
   if(!allies.length||!enemies.length){toast('阵容无效！');return}
   
   // 初始化被动
-  allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;});
-  enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
+  allies.forEach(a=>{if(a.id==='shield')a.defBuff=a.def;if(a.id==='sange')a.taunt=true,a.tauntPerm=true;if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5)});
+  enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='zhangxuyang')e.hp=Math.round(e.maxHp/5);if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
   G.auto=true;
   B={allies,enemies,round:1,order:[],lv:-1,isPvp:true,log:[],done:false,
     shieldFirst:true,busy:false,paused:false,stats:{},isOnlinePvp:true};
