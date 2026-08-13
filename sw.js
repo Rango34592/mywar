@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mywar-v11';
+const CACHE_NAME = 'mywar-v12';
 const IMG_CACHE = 'mywar-img-v2';
 // 音乐不再缓存，按需从网络加载，大幅减少iPad存储占用
 
