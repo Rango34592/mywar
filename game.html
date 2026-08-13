@@ -9984,7 +9984,7 @@ function startPvpBattle(){
       if(uid===null)return;const h=pd.heroes.find(x=>x.uid===uid);if(!h)return;
       const eqUids=pd.eqAssign[uid]||[];h.eq=[eqUids[0]||null,eqUids[1]||null];
       const s=pvpStats(h,pd);
-      units.push({...s,hp:s.hp,maxHp:s.maxHp,isE,pos:pMap[i],cdLeft:0,skOn:false,
+      units.push({...s,name:s.name+(isE?'(红)':'(蓝)'),hp:s.hp,maxHp:s.maxHp,isE,pos:pMap[i],cdLeft:0,skOn:false,
         taunt:false,tauntPerm:false,defBuff:0,atkBuff:0,atkBuffTurns:0,defBuffTurns:0,defBuff2:0,
         stun:0,bleed:0,bleedDmg:0,poisons:[],bleeds:[],revived:false,kangwaUsed:false,
         poison:0,poisonDmg:0,shield:0,invincible:0,silenced:0,
@@ -10681,7 +10681,7 @@ function olRunHostBattle(){
         const rData=pd.relics?pd.relics.find(r=>r.uid===h.relicUid):null;
         if(rData){relicId=rData.id;relicObj=rData}
       }
-      units.push({...s,hp:s.hp,maxHp:s.maxHp,isE,pos:pMap[i],cdLeft:0,skOn:false,
+      units.push({...s,name:s.name+(isE?'(红)':'(蓝)'),hp:s.hp,maxHp:s.maxHp,isE,pos:pMap[i],cdLeft:0,skOn:false,
         taunt:false,tauntPerm:false,defBuff:0,atkBuff:0,atkBuffTurns:0,defBuffTurns:0,defBuff2:0,
         stun:0,bleed:0,bleedDmg:0,poisons:[],bleeds:[],revived:false,kangwaUsed:false,
         poison:0,poisonDmg:0,shield:0,invincible:0,silenced:0,
@@ -10707,28 +10707,14 @@ function olRunHostBattle(){
   B.allies.forEach(a=>{if(a.id==='denglikai')B.allies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
   B.enemies.forEach(e=>{if(e.id==='denglikai')B.enemies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
   
-  // 监听战斗日志发送给客户端（自动添加敌我方标记）
+  // 监听战斗日志发送给客户端
   const origLog=B.log;
   B._olLogBuffer=[];
-  // 构建单位名→标记映射（按名字长度降序，避免短名匹配到长名子串）
-  function _tagLogEntry(entry){
-    if(!B||!B.isOnlinePvp)return entry;
-    const allUnits=[...B.allies,...B.enemies].sort((a,b)=>b.name.length-a.name.length);
-    for(const u of allUnits){
-      const tag=u.isE?'(红)':'(蓝)';
-      const escaped=u.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-      // 只替换第一个未被标记的出现（用负向前瞻避免重复标记）
-      const regex=new RegExp(escaped+'(?!\\((?:蓝|红)\\))');
-      entry=entry.replace(regex,u.name+tag);
-    }
-    return entry;
-  }
   B.log=new Proxy([],{
     get(target,prop){
       if(prop==='push')return function(...args){
-        const processed=args.map(_tagLogEntry);
-        target.push(...processed);
-        B._olLogBuffer.push(...processed);
+        target.push(...args);
+        B._olLogBuffer.push(...args);
         return target.length;
       };
       return target[prop];
