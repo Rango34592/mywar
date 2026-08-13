@@ -2200,6 +2200,9 @@ function syncSeen(){G.heroes.forEach(h=>{if(h.id&&!G.seenHero.includes(h.id))G.s
 // Battle stats tracking
 function bDmg(srcUid,tgtUid,amt){if(!B||!B.stats||amt<=0)return;(B.stats[srcUid]=B.stats[srcUid]||{dmg:0,absorb:0,heal:0}).dmg+=amt;(B.stats[tgtUid]=B.stats[tgtUid]||{dmg:0,absorb:0,heal:0}).absorb+=amt;if(B.isWorldBoss&&B.enemies.some(e=>e.uid===tgtUid))B.wbDmgDealt=(B.wbDmgDealt||0)+amt}
 function bHeal(healerUid,amt){if(!B||!B.stats||amt<=0)return;(B.stats[healerUid]=B.stats[healerUid]||{dmg:0,absorb:0,heal:0}).heal+=amt}
+// Team name helpers: PvP uses absolute 蓝方/红方 (no perspective ambiguity), PvE uses relative 友军/敌方
+function btA(u){return B&&B.isPvp?(u.isE?'红方':'蓝方'):'友军'} // u's own team
+function btE(u){return B&&B.isPvp?(u.isE?'蓝方':'红方'):'敌方'} // u's enemy team
 
 let B = null;
 
@@ -4259,7 +4262,7 @@ function startLevel(lv){
     // 兽王：每个友军存活+8%攻击
     if(e.name==='兽王'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
     // 魔王：威压，所有敌方攻击-20%速度-1
-    if(e.name==='魔王'){B.allies.forEach(a=>{a.atkBuff=(a.atkBuff||0)-Math.round(a.atk*0.2);a.spd=Math.max(1,a.spd-1)});B.log.push(`<span style="color:#8e44ad">魔王威压！我方攻击-20%速度-1！</span>`)}
+    if(e.name==='魔王'){B.allies.forEach(a=>{a.atkBuff=(a.atkBuff||0)-Math.round(a.atk*0.2);a.spd=Math.max(1,a.spd-1)});B.log.push(`<span style="color:#8e44ad">魔王威压！${B.isPvp?'蓝方':'我方'}攻击-20%速度-1！</span>`)}
     // 双头食人魔初始化
     if(e.name==='双头食人魔')e._enraged=false;
     if(e.name==='狼人')e._enraged=false;
@@ -4274,7 +4277,7 @@ function startLevel(lv){
     // 马哥：周围无友军时攻击+25%速度+1
     if(e.name==='马哥'&&B.enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.25);e.atkBuffTurns=99;e.spd+=1}
     // 堕落主教：战斗开始全体友军减伤20%持续3回合
-    if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.2}});B.log.push(`<span style="color:#8e44ad">堕落主教！敌军全体减伤20%3回合！</span>`)}
+    if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.2}});B.log.push(`<span style="color:#8e44ad">堕落主教！${B.isPvp?'红方':'敌军'}全体减伤20%3回合！</span>`)}
     // 法老棺椁：不可暴击标记
     if(e.name==='法老棺椁')e._noCrit=true;
   });
@@ -4677,7 +4680,7 @@ async function runBattle(){
             const healed=applyHeal(a,heal);
             if(healed>0){totalH+=healed;showDmg(a.uid,healed,'heal')}
           }
-          if(totalH>0)B.log.push(`<span style="color:#27ae60">${wupoAlive.name} 自然之力！友军恢复${totalH}HP${_wupoR?' 🌿万象法杖':''}</span>`);
+          if(totalH>0)B.log.push(`<span style="color:#27ae60">${wupoAlive.name} 自然之力！${btA(wupoAlive)}恢复${totalH}HP${_wupoR?' 🌿万象法杖':''}</span>`);
         }
         // 敌方自然巫婆被动
         const eWupo=B.enemies.find(e=>e.hp>0&&e.id==='ziranwupo');
@@ -4687,7 +4690,7 @@ async function runBattle(){
             const heal=Math.round(eWupo.atk*1);const healed=applyHeal(a,heal);
             if(healed>0){eTotalH+=healed;showDmg(a.uid,healed,'heal')}
           }
-          if(eTotalH>0)B.log.push(`<span style="color:#27ae60">${eWupo.name} 自然之力！友军恢复${eTotalH}HP</span>`);
+          if(eTotalH>0)B.log.push(`<span style="color:#27ae60">${eWupo.name} 自然之力！${btA(eWupo)}恢复${eTotalH}HP</span>`);
         }
          // 蔡总被动：每回合开始给生命最低队友1.5倍攻击血盾
          const caizongAlive=B.allies.find(a=>a.hp>0&&a.id==='caizong');
@@ -4750,7 +4753,7 @@ async function runBattle(){
     // 魅惑检查：攻击友方
     if(actor.charmed>0){
       actor.charmed--;
-      B.log.push(`<span style="color:#9b59b6">${actor.name} 被魅惑！攻击友军！（剩余${actor.charmed}回合）</span>`);
+      B.log.push(`<span style="color:#9b59b6">${actor.name} 被魅惑！攻击${btA(actor)}！（剩余${actor.charmed}回合）</span>`);
       renderB();
       B.busy=true;
       try{
@@ -4812,7 +4815,7 @@ async function runBattle(){
         a.hp=Math.max(1,a.hp-15);auraTotal+=15;
         showDmg(a.uid,15,'norm');
       }
-      if(auraTotal>0)B.log.push(`<span style="color:#8e44ad">${actor.name} 死亡光环！敌方各受15伤害</span>`);
+      if(auraTotal>0)B.log.push(`<span style="color:#8e44ad">${actor.name} 死亡光环！${btE(actor)}各受15伤害</span>`);
     }
     // 魔王被动：每回合恢复3%最大生命
     if(actor.isE&&actor.name==='魔王'&&actor.hp>0){
@@ -4844,7 +4847,7 @@ async function runBattle(){
         const healed=applyHeal(a,regen);
         if(healed>0){totalH+=healed;showDmg(a.uid,healed,'heal')}
       }
-      if(totalH>0)B.log.push(`<span style="color:#8e44ad">${actor.name} 黑暗祝福！友军恢复${totalH}HP</span>`);
+      if(totalH>0)B.log.push(`<span style="color:#8e44ad">${actor.name} 黑暗祝福！${btA(actor)}恢复${totalH}HP</span>`);
     }
     // 眼怪被动：每回合随机1个敌方降20%攻击力2回合
     if(actor.isE&&actor.name==='眼怪'&&actor.hp>0){
@@ -5072,7 +5075,7 @@ async function executeActionAnim(actor){
     for(const a of allies){
       if(a.hp>0&&a!==actor){const healed=applyHeal(a,healAmt);if(healed>0){showDmg(a.uid,healed,'heal');bHeal(actor.uid,healed)}}
     }
-    B.log.push(`<span style="color:#2ecc71">${actor.name} 鼓舞之心！全体友军+${healAmt}HP</span>`);
+    B.log.push(`<span style="color:#2ecc71">${actor.name} 鼓舞之心！全体${btA(actor)}+${healAmt}HP</span>`);
   }
   // 张女士被动：首次血量低于1/3时，暴击率永久提高33.3%
   if(actor.id==='zhangnv'&&actor.hp>0&&!actor.passiveTriggered&&actor.hp<actor.maxHp/3){
@@ -5388,7 +5391,7 @@ async function execAttackAnim(actor,allies,enemies,label){
     for(const a of allies){
       if(a.hp>0&&a!==actor){const healed=applyHeal(a,healAmt);if(healed>0){showDmg(a.uid,healed,'heal');bHeal(actor.uid,healed)}}
     }
-    B.log.push(`<span style="color:#2ecc71">${actor.name} 鼓舞之心！全体友军+${healAmt}HP</span>`);
+    B.log.push(`<span style="color:#2ecc71">${actor.name} 鼓舞之心！全体${btA(actor)}+${healAmt}HP</span>`);
   }
   // 张女士被动：首次血量低于1/3时，暴击率永久提高33.3%
   if(actor.id==='zhangnv'&&actor.hp>0&&!actor.passiveTriggered&&actor.hp<actor.maxHp/3){
@@ -5636,7 +5639,7 @@ async function execSkillAnim(actor,allies,enemies){
           a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*0.15);a.atkBuffTurns=2;
         }
         screenFlash('gold');shakeScreen();
-        B.log.push(`<span style="color:#e67e22">${actor.name} 兽群召唤！${total}总伤害+友军+15%攻击</span>`);break;
+        B.log.push(`<span style="color:#e67e22">${actor.name} 兽群召唤！${total}总伤害+${btA(actor)}+15%攻击</span>`);break;
       }
       // ===== 魅魔：魅惑之吻 =====
       case '魅魔':{
@@ -5970,7 +5973,7 @@ async function execSkillAnim(actor,allies,enemies){
           else if(a.silenced>0){a.silenced=Math.max(0,a.silenced-1)}
         }
         await animClass(actor.uid,'anim-heal-glow',500);screenFlash('red');
-        B.log.push(`<span style="color:#c0392b">${actor.name} 供血仪式！献祭${sacHp}HP，友军恢复${totalH}HP</span>`);break;
+        B.log.push(`<span style="color:#c0392b">${actor.name} 供血仪式！献祭${sacHp}HP，${btA(actor)}恢复${totalH}HP</span>`);break;
       }
       // ===== 吸血鬼管家：暗夜侍奉 =====
       case '吸血鬼管家':{
@@ -5984,7 +5987,7 @@ async function execSkillAnim(actor,allies,enemies){
         const alive=B.enemies.filter(e=>e.hp>0);let totalH=0;
         for(const a of alive){const heal=Math.round(actor.atk*0.25);const healed=applyHeal(a,heal);if(healed>0){totalH+=healed;bHeal(actor.uid,healed)}}
         await animClass(actual.uid,'anim-hit',350);showDmg(actual.uid,rd,'skill');
-        B.log.push(`<span style="color:#8e44ad">${actor.name} 暗夜侍奉！${actual.name}${rd}伤害+友军恢复${totalH}HP</span>`);
+        B.log.push(`<span style="color:#8e44ad">${actor.name} 暗夜侍奉！${actual.name}${rd}伤害+${btA(actor)}恢复${totalH}HP</span>`);
         checkKill(actor,actual,B.enemies);renderB();break;
       }
       // ===== 狼王：狼王之怒 =====
@@ -5999,7 +6002,7 @@ async function execSkillAnim(actor,allies,enemies){
         if(isCrit)dmg=Math.round(dmg*actor.cdmg);
         const rd=applyDmg(actor,actual,dmg);
         await animClass(actual.uid,'anim-hit',450);showDmg(actual.uid,rd,isCrit?'crit':'skill');shakeScreen();
-        B.log.push(`<span style="color:#c0392b">${actor.name} 狼王之怒！${actual.name}${rd}伤害（${allyCount}友军加成）</span>`);
+        B.log.push(`<span style="color:#c0392b">${actor.name} 狼王之怒！${actual.name}${rd}伤害（${allyCount}${btA(actor)}加成）</span>`);
         checkKill(actor,actual,B.enemies);renderB();break;
       }
       // ===== 木乃伊：诅咒缠绕 =====
@@ -6058,7 +6061,7 @@ async function execSkillAnim(actor,allies,enemies){
           else if(a.silenced>0){a.silenced=Math.max(0,a.silenced-1)}
         }
         await animClass(actor.uid,'anim-heal-glow',500);screenFlash('gold');
-        B.log.push(`<span style="color:#f1c40f">${actor.name} 神圣赐福！友军恢复${totalH}HP</span>`);break;
+        B.log.push(`<span style="color:#f1c40f">${actor.name} 神圣赐福！${btA(actor)}恢复${totalH}HP</span>`);break;
       }
       // ===== 主教护法：制裁之锤 =====
       case '主教护法':{
@@ -6293,7 +6296,7 @@ function checkKill(actor,target,allies){
         const rd=applyDmg(target,e,boomDmg,true);boomTotal+=rd;
         showDmg(e.uid,rd,'norm');
       }
-      if(boomTotal>0){shakeScreen();B.log.push(`<span style="color:#27ae60">${target.name} 孢子爆炸！对敌方造成${boomTotal}总伤害！</span>`)}
+      if(boomTotal>0){shakeScreen();B.log.push(`<span style="color:#27ae60">${target.name} 孢子爆炸！对${btE(target)}造成${boomTotal}总伤害！</span>`)}
     }
     // 暗黑骑士被动：死亡时对击杀者造成自身最大生命30%真实伤害
     if(target.isE&&target.name==='暗黑骑士'&&target.hp<=0&&actor&&actor.hp>0){
@@ -6314,7 +6317,7 @@ function checkKill(actor,target,allies){
       const boomDmg=Math.round(target.maxHp*0.4);
       const enemies=target.isE?B.allies:B.enemies;let boomTotal=0;
       for(const e of enemies.filter(x=>x.hp>0)){if(e.invincible>0)continue;const rd=applyDmg(target,e,boomDmg,true);boomTotal+=rd;showDmg(e.uid,rd,'norm')}
-      if(boomTotal>0){shakeScreen();B.log.push(`<span style="color:#27ae60">${target.name} 孢子爆炸！对敌方造成${boomTotal}总伤害！</span>`)}
+      if(boomTotal>0){shakeScreen();B.log.push(`<span style="color:#27ae60">${target.name} 孢子爆炸！对${btE(target)}造成${boomTotal}总伤害！</span>`)}
     }
     // 肥尸被动：死亡对随机3个敌方造成25%最大生命伤害
     if(target.isE&&target.name==='肥尸'&&target.hp<=0){
@@ -6338,7 +6341,7 @@ function checkKill(actor,target,allies){
     if(target.isE&&target.name==='血仆'&&target.hp<=0){
       const allies2=target.isE?B.enemies:B.allies;let tH=0;
       for(const a of allies2.filter(x=>x.hp>0)){const h=applyHeal(a,Math.round(a.maxHp*0.2));if(h>0){tH+=h;showDmg(a.uid,h,'heal')}}
-      if(tH>0)B.log.push(`<span style="color:#c0392b">${target.name} 血之羁绊！友军恢复${tH}HP</span>`);
+      if(tH>0)B.log.push(`<span style="color:#c0392b">${target.name} 血之羁绊！${btA(target)}恢复${tH}HP</span>`);
     }
     // 木乃伊被动：死亡随机3个敌方中毒3回合
     if(target.isE&&target.name==='木乃伊'&&target.hp<=0){
@@ -10395,9 +10398,9 @@ function olHandleMsg(msg){
         const span=document.createElement('div');
         span.style.cssText='padding:2px 0;border-bottom:1px solid #1a1a2e';
         let html=entry;
-        // 客户端视角转换：互换蓝红标记 + 友军/敌军
+        // 客户端视角转换：互换蓝红标记 + 蓝方/红方
         html=html.split('(蓝)').join('\x00TEMP\x00').split('(红)').join('(蓝)').split('\x00TEMP\x00').join('(红)');
-        html=html.split('友军').join('\x00T2\x00').split('敌军').join('友军').split('\x00T2\x00').join('敌军');
+        html=html.split('蓝方').join('\x00T2\x00').split('红方').join('蓝方').split('\x00T2\x00').join('红方');
         html=html.replace(/(回合 \d+)/g,'<b style="color:#f39c12">$1</b>');
         html=html.replace(/(暴击| crit)/gi,'<span style="color:#e74c3c;font-weight:bold">$1</span>');
         html=html.replace(/(格挡|闪避)/g,'<span style="color:#3498db">$1</span>');
