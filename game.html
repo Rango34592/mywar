@@ -1281,7 +1281,7 @@ if('ontouchstart' in window || navigator.maxTouchPoints > 0){
     <button class="btn-realm med-btn" style="background:linear-gradient(135deg,#ff6600,#ff3300)" onclick="startEndless()">🌀 进入深渊</button>
   </div>
   <div style="margin-top:12px;font-size:10px;color:#999;text-align:center;line-height:1.6">
-    退出时按通关数结算奖励 | 失败不结算 | 英雄血量不重置
+    退出时按通关数结算奖励 | 失败也给安慰奖励 | 英雄血量不重置
   </div>
 </div>
 
@@ -1935,8 +1935,8 @@ const H = {
     sk:'净化冲击',skDesc:'对所有敌人造成1.5倍伤害，清除所有敌军增益，恢复所有友军1倍血量',skCd:60,
     ps:'驱散攻击',psDesc:'攻击净化敌人增益，普攻为全体攻击',row:'back',rng:'ranged'},
   sange:{id:'sange',name:'三哥',img:'英雄图片/三哥.jpg',atk:80,def:35,hp:1400,cdmg:1.5,crit:5,spd:1,
-    sk:'背水一战',skDesc:'对单体造成2倍真实伤害，目标血量>50%则改为5倍',skCd:60,
-    ps:'永续嘲讽',psDesc:'始终处于嘲讽状态',row:'front',rng:'melee'},
+    sk:'背水一战',skDesc:'对单体造成8倍真实伤害（无视防御/护盾），自身每损失10%血量额外+1倍；命中后恢复造成伤害30%的生命',skCd:45,
+    ps:'永续嘲讽',psDesc:'始终处于嘲讽状态，受到攻击时减免20%伤害',row:'front',rng:'melee'},
   yuedeng:{id:'yuedeng',name:'月登',img:'英雄图片/月登.jpg',atk:120,def:10,hp:1100,cdmg:1.5,crit:5,spd:2,
     sk:'毒雾弥漫',skDesc:'对敌方全体造成1.2倍伤害，100%中毒2回合（毒伤=月登攻击50%，无视防御）',skCd:60,
     ps:'毒伤增幅',psDesc:'对中毒单位伤害+30%',row:'back',rng:'ranged'},
@@ -4238,6 +4238,7 @@ function startLevel(lv){
     if(a.id==='shield')a.defBuff=a.def;
     if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽
     if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5); // 张绪阳进场只有1/5血
+    if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
   });
   // 邓力凯被动：全体友军速度+1
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
@@ -4506,8 +4507,14 @@ async function runBattle(){
       B.allies.forEach(a=>{
         if(a.cdLeft>0){
           a.cdLeft--;
-          // 神秘老者圣遗物（时光沙漏）：CD额外-1
-          if(a.cdLeft>0&&B.allies.some(ally=>ally.relic&&ally._relicId==='shenmilaozhe'&&ally.hp>0))a.cdLeft--;
+          // 神秘老者圣遗物（时光沙漏）：CD额外-1（高星级有概率额外再-1）
+          if(a.cdLeft>0){
+            const oldOne=B.allies.find(ally=>ally.relic&&ally._relicId==='shenmilaozhe'&&ally.hp>0);
+            if(oldOne){
+              a.cdLeft--;
+              if((oldOne.relicMult||1)>=2.5&&a.cdLeft>0&&Math.random()<0.3)a.cdLeft--; // 5星以上30%概率再-1
+            }
+          }
         }
         a._dmgDealtThisTurn=0;
       });
@@ -4563,12 +4570,12 @@ async function runBattle(){
           const newPoisons=[];
           for(const p of u.poisons){
             let pdmg=p.dmg;
-            // 月登圣遗物：毒伤+10%
+            // 月登圣遗物：毒伤+10%（受星级影响）
             const ydRelic=(!u.isE?B.allies:B.enemies).find(a=>a.hp>0&&a.relic&&a._relicId==='yuedeng');
-            if(ydRelic)pdmg=Math.round(pdmg*1.1);
-            // Dongrab圣遗物：毒伤翻倍
+            if(ydRelic)pdmg=Math.round(pdmg*(1+0.1*(ydRelic.relicMult||1)));
+            // Dongrab圣遗物：毒伤翻倍（受星级影响）
             const drRelic=(!u.isE?B.allies:B.enemies).find(a=>a.hp>0&&a.relic&&a._relicId==='dongrab');
-            if(drRelic)pdmg*=2;
+            if(drRelic)pdmg=Math.round(pdmg*(1+1*(drRelic.relicMult||1)));
             totalPoison+=pdmg;
             p.turns--;
             if(p.turns>0)newPoisons.push(p);
@@ -4586,7 +4593,7 @@ async function runBattle(){
       for(const u of [...B.allies,...B.enemies]){
         if(u.hp>0&&u.relic&&u._relicId==='xu'){
           const hasDebuff=u.stun>0||u.bleed>0||u.poison>0||u.silenced>0||u.charmed>0||u.marked>0||u.healReduce>0||u.dmgReduce>0||u.spdReduce>0;
-          if(hasDebuff){const healed=applyHeal(u,200);if(healed>0){showDmg(u.uid,healed,'heal');bHeal(u.uid,healed);B.log.push(`<span style="color:#2ecc71">🥤 ${u.name} 水杯恢复+${healed}</span>`)}}
+          if(hasDebuff){const healed=applyHeal(u,Math.round(200*(u.relicMult||1)));if(healed>0){showDmg(u.uid,healed,'heal');bHeal(u.uid,healed);B.log.push(`<span style="color:#2ecc71">🥤 ${u.name} 水杯恢复+${healed}</span>`)}}
         }
       }
       // buff倒计时
@@ -4666,7 +4673,7 @@ async function runBattle(){
           const _wupoR=wupoAlive.relic&&wupoAlive._relicId==='ziranwupo';
           for(const a of B.allies.filter(a=>a.hp>0)){
             let heal=Math.round(wupoAlive.atk*1);
-            if(_wupoR)heal+=Math.round(a.maxHp*0.05);
+            if(_wupoR)heal+=Math.round(a.maxHp*0.05*(wupoAlive.relicMult||1));
             const healed=applyHeal(a,heal);
             if(healed>0){totalH+=healed;showDmg(a.uid,healed,'heal')}
           }
@@ -4717,9 +4724,9 @@ async function runBattle(){
         // 马哥被动：每失去5%生命暴击+2%
         B.allies.forEach(a=>{if(a.id==='mage'&&a.hp>0){a.crit=5+Math.round((1-a.hp/a.maxHp)/0.05)*2}});
         B.enemies.forEach(e=>{if(e.id==='mage'&&e.hp>0){e.crit=5+Math.round((1-e.hp/e.maxHp)/0.05)*2}});
-        // 蔡总圣遗物：每回合恢复5%生命
-        for(const a of B.allies){if(a.hp>0&&a.relic&&a._relicId==='caizong'){const rh=Math.round(a.maxHp*0.05);const hd=applyHeal(a,rh);if(hd>0){showDmg(a.uid,hd,'heal');bHeal(a.uid,hd);B.log.push(`<span style="color:#2ecc71">🎎 ${a.name} 丘丘麻恢复+${hd}</span>`)}}}
-        for(const e of B.enemies){if(e.hp>0&&e.relic&&e._relicId==='caizong'){const rh=Math.round(e.maxHp*0.05);const hd=applyHeal(e,rh);if(hd>0){showDmg(e.uid,hd,'heal');bHeal(e.uid,hd);B.log.push(`<span style="color:#2ecc71">🎎 ${e.name} 丘丘麻恢复+${hd}</span>`)}}}
+        // 蔡总圣遗物：每回合恢复5%生命（受星级影响）
+        for(const a of B.allies){if(a.hp>0&&a.relic&&a._relicId==='caizong'){const rh=Math.round(a.maxHp*0.05*(a.relicMult||1));const hd=applyHeal(a,rh);if(hd>0){showDmg(a.uid,hd,'heal');bHeal(a.uid,hd);B.log.push(`<span style="color:#2ecc71">🎎 ${a.name} 丘丘麻恢复+${hd}</span>`)}}}
+        for(const e of B.enemies){if(e.hp>0&&e.relic&&e._relicId==='caizong'){const rh=Math.round(e.maxHp*0.05*(e.relicMult||1));const hd=applyHeal(e,rh);if(hd>0){showDmg(e.uid,hd,'heal');bHeal(e.uid,hd);B.log.push(`<span style="color:#2ecc71">🎎 ${e.name} 丘丘麻恢复+${hd}</span>`)}}}
         buildOrder();
       B.log.push(`<b style="color:var(--gold)">── 回合 ${B.round} ──</b>`);
       renderB();
@@ -5075,21 +5082,24 @@ async function executeActionAnim(actor){
 }
 
 // Apply damage considering shield, invincible, damage reduction
-// 圣遗物debuff触发（胥水杯：受debuff时恢复200HP）
+// 圣遗物debuff触发（胥水杯：受debuff时恢复HP，受星级影响）
 function relicOnDebuff(target){
   if(target.relic&&target._relicId==='xu'&&target.hp>0){
-    const healed=applyHeal(target,200);
+    const healed=applyHeal(target,Math.round(200*(target.relicMult||1)));
     if(healed>0){showDmg(target.uid,healed,'heal');bHeal(target.uid,healed);B.log.push(`<span style="color:#2ecc71">🥤 ${target.name} 水杯恢复+${healed}</span>`)}
   }
 }
-// 圣遗物debuff持续+1回合（达兄乐器）
+// 圣遗物debuff持续+1回合（达兄乐器，高星级概率额外+1）
 function relicDebuffExtraTurns(actor){
-  if(actor.relic&&actor._relicId==='daxiong')return 1;
+  if(actor.relic&&actor._relicId==='daxiong'){
+    if((actor.relicMult||1)>=2.5&&Math.random()<0.3)return 2; // 5星以上30%概率+2
+    return 1;
+  }
   return 0;
 }
-// NTTT圣遗物被动增幅
-function ntttBuffPct(){const nttt=B.allies.find(a=>a.hp>0&&a.id==='nttt');if(!nttt)return 0.15;if(nttt.relic&&nttt._relicId==='nttt')return 0.15*1.06;return 0.15}
-function ntttBuffPctE(){const nttt=B.enemies.find(e=>e.hp>0&&e.id==='nttt');if(!nttt)return 0.15;if(nttt.relic&&nttt._relicId==='nttt')return 0.15*1.06;return 0.15}
+// NTTT圣遗物被动增幅（受星级影响）
+function ntttBuffPct(){const nttt=B.allies.find(a=>a.hp>0&&a.id==='nttt');if(!nttt)return 0.15;if(nttt.relic&&nttt._relicId==='nttt')return 0.15*(1+0.06*(nttt.relicMult||1));return 0.15}
+function ntttBuffPctE(){const nttt=B.enemies.find(e=>e.hp>0&&e.id==='nttt');if(!nttt)return 0.15;if(nttt.relic&&nttt._relicId==='nttt')return 0.15*(1+0.06*(nttt.relicMult||1));return 0.15}
 function applyDmg(actor,target,rawDmg,_noReflect){
   if(target.invincible>0){B.log.push(`${target.name} 无敌！抵挡了伤害`);return 0}
   let dmg=rawDmg;
@@ -5108,15 +5118,19 @@ function applyDmg(actor,target,rawDmg,_noReflect){
   // 吸血鬼管家被动：吸血鬼存活时减伤25%
   if(target.isE&&target.name==='吸血鬼管家'&&B.enemies.some(e=>e.hp>0&&e.name==='吸血鬼'))dmg=Math.round(dmg*0.75);
   if(target.dmgReduceAmt>0){const orig=dmg;dmg=Math.round(dmg*(1-target.dmgReduceAmt));if(orig!==dmg)B.log.push(`<span style="color:#3498db">🛡 ${target.name} 减伤！伤害${orig}→${dmg}</span>`)}
-  // 兰显清圣遗物（猎人长弓）：对标记目标伤害+15%
+  // 兰显清圣遗物（猎人长弓）：对标记目标伤害+15%（受星级影响）
   if(dmg>0&&actor.relic&&actor._relicId==='lanxianqing'&&target.marked>0){
-    const extra=Math.round(dmg*0.15);dmg+=extra;
+    const extra=Math.round(dmg*0.15*(actor.relicMult||1));dmg+=extra;
     B.log.push(`<span style="color:#e67e22">🏹 ${actor.name} 猎人长弓+${extra}</span>`);
   }
-  // 矿工圣遗物（金矿图纸）：对后排伤害+15%
+  // 矿工圣遗物（金矿图纸）：对后排伤害+15%（受星级影响）
   if(dmg>0&&actor.relic&&actor._relicId==='miner'&&target.pos&&target.pos.row==='back'){
-    const extra=Math.round(dmg*0.15);dmg+=extra;
+    const extra=Math.round(dmg*0.15*(actor.relicMult||1));dmg+=extra;
     B.log.push(`<span style="color:#e67e22">⛏️ ${actor.name} 金矿图纸+${extra}</span>`);
+  }
+  // 三哥被动：永续嘲讽，受到攻击时减免20%伤害
+  if(dmg>0&&target.id==='sange'&&(target.taunt||target.tauntPerm)){
+    const orig=dmg;dmg=Math.round(dmg*0.8);if(orig!==dmg)B.log.push(`<span style="color:#3498db">🛡 ${target.name} 嘲讽减伤20%！${orig}→${dmg}</span>`);
   }
   // 三哥圣遗物（义气令）：嘲讽时额外10%减伤
   if(dmg>0&&target.id==='sange'&&target.relic&&target._relicId==='sange'&&(target.taunt||target.tauntPerm)){
@@ -5137,9 +5151,9 @@ function applyDmg(actor,target,rawDmg,_noReflect){
   // 兰显贵被动：受到致命伤时锁血2回合（每场1次）
   if(target.id==='lanxiangui'&&target.hp<=0&&!target._lockBloodUsed){
     target.hp=1;target._lockBloodUsed=true;target._lockBlood=2;
-    // 兰显富圣遗物（家传玉佩）：锁血时恢复30%生命
+    // 兰显富圣遗物（家传玉佩）：锁血时恢复30%生命（受星级影响）
     if(target.relic&&target._relicId==='lanxianfu'){
-      const bh=Math.round(target.maxHp*0.3);const bh2=applyHeal(target,bh);
+      const bh=Math.round(target.maxHp*0.3*(target.relicMult||1));const bh2=applyHeal(target,bh);
       if(bh2>0){showDmg(target.uid,bh2,'heal');bHeal(target.uid,bh2);B.log.push(`<span style="color:#2ecc71">📿 ${target.name} 玉佩恢复+${bh2}</span>`)}
     }
     B.log.push(`<span style="color:#f1c40f">${target.name} 不屈意志！锁血2回合！</span>`);
@@ -5162,18 +5176,18 @@ function applyDmg(actor,target,rawDmg,_noReflect){
   // Equipment lifesteal: attacker heals for lifesteal% of damage dealt
   if(dmg>0&&actor.eqLifesteal>0){
     let stolen=Math.round(dmg*actor.eqLifesteal/100);
-    // 唐刚森圣遗物：吸血效果+10%
-    if(actor.relic&&actor._relicId==='squirrel')stolen=Math.round(stolen*1.1);
+    // 唐刚森圣遗物：吸血效果+10%（受星级影响）
+    if(actor.relic&&actor._relicId==='squirrel')stolen=Math.round(stolen*(1+0.1*(actor.relicMult||1)));
     if(stolen>0){const healed=applyHeal(actor,stolen);if(healed>0){showDmg(actor.uid,healed,'heal');bHeal(actor.uid,healed);B.log.push(`<span style="color:#9b59b6">🩸 ${actor.name} 吸血+${healed}</span>`)}}
   }
-  // 老T圣遗物：攻击附带20%吸血
+  // 老T圣遗物：攻击附带20%吸血（受星级影响）
   if(dmg>0&&actor.relic&&actor._relicId==='laot'){
-    const lst=Math.round(dmg*0.2);
+    const lst=Math.round(dmg*0.2*(actor.relicMult||1));
     if(lst>0){const healed=applyHeal(actor,lst);if(healed>0){showDmg(actor.uid,healed,'heal');bHeal(actor.uid,healed);B.log.push(`<span style="color:#9b59b6">🪄 ${actor.name} 权杖吸血+${healed}</span>`)}}
   }
-  // 张继华圣遗物：伤害+5%
+  // 张继华圣遗物：伤害+5%（受星级影响）
   if(dmg>0&&actor.relic&&actor._relicId==='zhangjihua'){
-    const extra=Math.round(dmg*0.05);
+    const extra=Math.round(dmg*0.05*(actor.relicMult||1));
     if(extra>0){target.hp-=extra;bDmg(actor.uid,target.uid,extra);showDmg(target.uid,extra,'norm');B.log.push(`<span style="color:#e67e22">📏 ${actor.name} 戒尺之力+${extra}</span>`)}
   }
   // Equipment thorns: target reflects thorns% of damage (no recursion)
@@ -5196,12 +5210,12 @@ function applyHeal(target,rawHeal){
   if(target.isE&&B.enemies.some(e=>e.hp>0&&e.id==='lanski'))h*=2;
   // Equipment heal boost
   if(target.eqHealBoost>0){const orig=h;h=Math.round(h*(1+target.eqHealBoost/100));if(h!==orig)B.log.push(`<span style="color:#2ecc71">💚 ${target.name} 治疗加成${target.eqHealBoost}%！${orig}→${h}</span>`)}
-  // 牧师圣遗物：治疗量+10%
-  if(target.relic&&target._relicId==='priest'){const orig=h;h=Math.round(h*1.1);if(h!==orig)B.log.push(`<span style="color:#2ecc71">✝️ ${target.name} 十字架加持！${orig}→${h}</span>`)}
-  // 神秘老妇圣遗物（净水碗）：治疗+15%
-  if(target.relic&&target._relicId==='shenmilaofu'){const orig=h;h=Math.round(h*1.15);if(h!==orig)B.log.push(`<span style="color:#2ecc71">🥣 ${target.name} 净水碗加持！${orig}→${h}</span>`)}
-  // 黄籽样圣遗物：恢复量+15%
-  if(target.relic&&target._relicId==='huangzi'){const orig=h;h=Math.round(h*1.15);if(h!==orig)B.log.push(`<span style="color:#2ecc71">🎵 ${target.name} 播放器加持！${orig}→${h}</span>`)}
+  // 牧师圣遗物：治疗量+10%（受星级影响）
+  if(target.relic&&target._relicId==='priest'){const orig=h;h=Math.round(h*(1+0.1*(target.relicMult||1)));if(h!==orig)B.log.push(`<span style="color:#2ecc71">✝️ ${target.name} 十字架加持！${orig}→${h}</span>`)}
+  // 神秘老妇圣遗物（净水碗）：治疗+15%（受星级影响）
+  if(target.relic&&target._relicId==='shenmilaofu'){const orig=h;h=Math.round(h*(1+0.15*(target.relicMult||1)));if(h!==orig)B.log.push(`<span style="color:#2ecc71">🥣 ${target.name} 净水碗加持！${orig}→${h}</span>`)}
+  // 黄籽样圣遗物：恢复量+15%（受星级影响）
+  if(target.relic&&target._relicId==='huangzi'){const orig=h;h=Math.round(h*(1+0.15*(target.relicMult||1)));if(h!==orig)B.log.push(`<span style="color:#2ecc71">🎵 ${target.name} 播放器加持！${orig}→${h}</span>`)}
   const old=target.hp;target.hp=Math.min(target.maxHp,target.hp+h);
   const healed=target.hp-old; // 溢出部分直接丢失
   // 付骞被动：敌人治疗时免费攻击
@@ -5309,14 +5323,14 @@ async function execAttackAnim(actor,allies,enemies,label){
   if(actual.id==='shanxiyuge'&&actual.hp>0&&Math.random()<0.2){
     actor.silenced=(actor.silenced||0)+2;
     B.log.push(`<span style="color:#9b59b6">${actual.name} 震慑反击！${actor.name} 沉默2回合</span>`);
-    // 陕西宇哥圣遗物（老陈醋）：反击沉默时造成50%攻击真实伤害
+    // 陕西宇哥圣遗物（老陈醋）：反击沉默时造成50%攻击真实伤害（受星级影响）
     if(actual.relic&&actual._relicId==='shanxiyuge'){
-      const cDmg=Math.round(actual.atk*0.5);actor.hp-=cDmg;bDmg(actual.uid,actor.uid,cDmg);
+      const cDmg=Math.round(actual.atk*0.5*(actual.relicMult||1));actor.hp-=cDmg;bDmg(actual.uid,actor.uid,cDmg);
       showDmg(actor.uid,cDmg,'norm');B.log.push(`<span style="color:#e67e22">🍶 ${actual.name} 老陈醋反击${cDmg}！</span>`);
     }
   }
-  // 赵晴被动：攻击50%眩晕1回合（圣遗物+15%）
-  const _zqStun=actor.id==='zhaoqing'?(0.5+(actor.relic&&actor._relicId==='zhaoqing'?0.15:0)):0;
+  // 赵晴被动：攻击50%眩晕1回合（圣遗物+15%，受星级影响）
+  const _zqStun=actor.id==='zhaoqing'?(0.5+(actor.relic&&actor._relicId==='zhaoqing'?0.15*(actor.relicMult||1):0)):0;
   if(actor.id==='zhaoqing'&&actor.hp>0&&Math.random()<_zqStun){
     actual.stun=(actual.stun||0)+1;
     B.log.push(`<span style="color:#f39c12">${actor.name} 雷霆一击！${actual.name} 眩晕1回合</span>`);
@@ -5382,8 +5396,8 @@ async function execAttackAnim(actor,allies,enemies,label){
     B.log.push(`<span style="color:#e74c3c">${actor.name} 绝境觉醒！暴击率提升33.3%！</span>`);
   }
   checkKill(actor,actual,allies);
-  // 圣遗物连击：糖稀/邓力凯50%概率额外普攻
-  if(actor.relic&&(actor._relicId==='tangxi'||actor._relicId==='denglikai')&&actor.hp>0&&actual.hp>0&&Math.random()<0.5){
+  // 圣遗物连击：糖稀/邓力凯50%概率额外普攻（受星级影响）
+  if(actor.relic&&(actor._relicId==='tangxi'||actor._relicId==='denglikai')&&actor.hp>0&&actual.hp>0&&Math.random()<0.5*(actor.relicMult||1)){
     B.log.push(`<span style="color:#f39c12">${actor.name} 圣遗物连击！</span>`);
     await wait(200/G.spd);
     // 简化：直接再打一次普攻（递归调用会导致重入问题，所以直接再算一次伤害）
@@ -6434,7 +6448,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
     }
     case 'squirrel':{
       const alive=enemies.filter(e=>e.hp>0);
-      const _sqRelic=actor.relic&&actor._relicId==='squirrel'?1.2:1;
+      const _sqRelic=actor.relic&&actor._relicId==='squirrel'?(1+0.2*(actor.relicMult||1)):1;
       let total=0;
       for(const e of alive){
         const def=e.def+(e.defBuff||0);
@@ -6530,7 +6544,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       const row=enemies.filter(e=>e.hp>0&&e.pos.row==='front').length?'front':'back';
       let tgts=enemies.filter(e=>e.hp>0&&e.pos.row===row);
       if(!tgts.length)tgts=enemies.filter(e=>e.hp>0);
-      const stunBonus=actor.relic&&actor._relicId==='zhaoqing'?0.15:0;
+      const stunBonus=actor.relic&&actor._relicId==='zhaoqing'?0.15*(actor.relicMult||1):0;
       let total=0;
       for(const e of tgts){
         const def=e.def+(e.defBuff||0);
@@ -6557,11 +6571,22 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
     case 'sange':{
       const tgt=findTarget(actor,enemies);if(!tgt)break;
       const actual=resolveTaunt(tgt,enemies);
-      let dmg=actual.hp>actual.maxHp/2?Math.round(actor.atk*5):Math.round(actor.atk*2);
+      // 8倍真实伤害 + 每损失10%血量额外+1倍
+      const hpLostRatio=1-(actor.hp/actor.maxHp);
+      const bonusMult=Math.floor(hpLostRatio*10); // 每损失10%+1倍
+      let dmg=Math.round(actor.atk*(8+bonusMult));
       if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
-      const rd=applyDmg(actor,actual,dmg);
-      await animClass(actual.uid,'anim-hit',400);showDmg(actual.uid,rd,'skill');shakeScreen();
-      B.log.push(`<span style="color:var(--red)">${actor.name} 真伤重拳 → ${actual.name} ${rd}伤害</span>`);break;
+      // 真实伤害：直接扣血，无视防御/护盾/减伤
+      if(actual.invincible>0){B.log.push(`${actual.name} 无敌！抵挡了伤害`);break;}
+      const actual_dmg=Math.min(dmg,actual.hp);
+      actual.hp-=actual_dmg;bDmg(actor.uid,actual.uid,actual_dmg);
+      if(actual_dmg>0)actor._dmgDealtThisTurn=(actor._dmgDealtThisTurn||0)+actual_dmg;
+      // 恢复造成伤害30%的生命
+      const heal=Math.round(actual_dmg*0.3);
+      if(heal>0){const healed=applyHeal(actor,heal);if(healed>0){showDmg(actor.uid,healed,'heal');bHeal(actor.uid,healed);}}
+      await animClass(actual.uid,'anim-hit',400);showDmg(actual.uid,actual_dmg,'skill');shakeScreen();
+      B.log.push(`<span style="color:var(--red)">${actor.name} 背水一战(真伤${8+bonusMult}倍) → ${actual.name} ${actual_dmg}伤害${bonusMult>0?'(残血加成+'+bonusMult+'倍)':''}${heal>0?' 回复'+heal+'HP':''}</span>`);
+      break;
     }
     case 'yuedeng':{
       const alive=enemies.filter(e=>e.hp>0);let total=0;
@@ -6577,7 +6602,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
     }
     case 'kk':{
       const alive=enemies.filter(e=>e.hp>0);const cnt=Math.min(2,alive.length);let total=0;
-      const kkPct=actor.relic&&actor._relicId==='kk'?1.15:1;
+      const kkPct=actor.relic&&actor._relicId==='kk'?(1+0.15*(actor.relicMult||1)):1;
       for(let i=0;i<cnt;i++){
         const e=alive[i];let dmg=Math.max(1,Math.round(actor.atk*2.5*kkPct));
         if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
@@ -6707,7 +6732,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       let dmg=Math.max(1,Math.round(actor.atk*4)-def);
       if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
       const rd=applyDmg(actor,actual,dmg);
-      const _jRelic=actor.relic&&actor._relicId==='jimmy'?1.2:1;
+      const _jRelic=actor.relic&&actor._relicId==='jimmy'?(1+0.2*(actor.relicMult||1)):1;
       addBleed(actual,Math.round(actor.atk*_jRelic),2);
       await animClass(actual.uid,'anim-hit',400);showDmg(actual.uid,rd,'skill');shakeScreen();
       if(actor.hp<actor.maxHp/2){
@@ -6778,7 +6803,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
         await animClass(e.uid,'anim-hit',300);showDmg(e.uid,rd,'skill');await wait(150/G.spd);
       }
       // 给生命最低两个队友2倍攻击力护盾
-      const _guiShieldPct=actor.relic&&actor._relicId==='lanxiangui'?1.2:1;
+      const _guiShieldPct=actor.relic&&actor._relicId==='lanxiangui'?(1+0.2*(actor.relicMult||1)):1;
       const sortedAllies=allies.filter(a=>a.hp>0).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp).slice(0,2);
       for(const a of sortedAllies){
         const sAmt=Math.round(actor.atk*2*_guiShieldPct);
@@ -6805,7 +6830,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
     case 'lanxianying':{
       const backAllies=allies.filter(a=>a.hp>0&&a.pos&&a.pos.row==='back');
       const targets=backAllies.length?backAllies:allies.filter(a=>a.hp>0);
-      const invTurns=actor.relic&&actor._relicId==='lanxianying'?3:2;
+      const invTurns=actor.relic&&actor._relicId==='lanxianying'?2+Math.round(1*(actor.relicMult||1)):2;
       for(const a of targets){
         a.invincible=(a.invincible||0)+invTurns;
         await animClass(a.uid,'anim-heal-glow',400);
@@ -7123,15 +7148,17 @@ function genArenaTeam(){
       }
     }
     // 圣遗物
-    let hasRelic=false,relicId=null;
+    let hasRelic=false,relicId=null,relicStar=1;
     if(relicChance>0&&Math.random()<relicChance&&RELICS[hid]){
       hasRelic=true;relicId=hid;
+      relicStar=Math.min(6,Math.max(1,Math.round(heroRank/2)+1)); // 敌方圣遗物星级随段位
+      const rlM=Math.pow(1.2,relicStar-1);
       const rl=RELICS[hid];
-      if(rl.atkPct)atk+=Math.round(atk*rl.atkPct);
-      if(rl.defPct)def+=Math.round(def*rl.defPct);
-      if(rl.hpPct)hp+=Math.round(hp*rl.hpPct);
-      if(rl.critFlat)crit+=rl.critFlat;
-      if(rl.cdmgFlat)eqCdmg+=rl.cdmgFlat;
+      if(rl.atkPct)atk+=Math.round(atk*rl.atkPct*rlM);
+      if(rl.defPct)def+=Math.round(def*rl.defPct*rlM);
+      if(rl.hpPct)hp+=Math.round(hp*rl.hpPct*rlM);
+      if(rl.critFlat)crit+=Math.round(rl.critFlat*rlM);
+      if(rl.cdmgFlat)eqCdmg+=rl.cdmgFlat*rlM;
     }
     team.push({...d,atk,def,hp,maxHp:hp,
       star,uid:'ae'+i,isE:true,crit,cdmg:+((d.cdmg||1.5)+eqCdmg).toFixed(2),cdLeft:0,
@@ -7139,7 +7166,7 @@ function genArenaTeam(){
       stun:0,bleed:0,atkBuff:0,atkBuffTurns:0,defBuff:0,defBuffTurns:0,defBuff2:0,
       skOn:false,kangwaUsed:false,revived:false,charmed:0,
       arenaEq:eqList,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,
-      relic:hasRelic,_relicId:relicId,_rank:heroRank,
+      relic:hasRelic,_relicId:relicId,_rank:heroRank,relicMult:hasRelic?Math.pow(1.2,relicStar-1):1,
       debuffImmune:hid==='swordsman'||hid==='xu'||hid==='ziranwupo'});
   }
   return team;
@@ -7312,6 +7339,7 @@ function startArena(){
     if(a.id==='shield')a.defBuff=a.def;
     if(a.id==='sange')a.taunt=true,a.tauntPerm=true; // 三哥永久嘲讽
     if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5); // 张绪阳进场只有1/5血
+    if(a.relic&&a._relicId){const rlItem=G.relics.find(r=>r.uid===a.relicUid);a.relicMult=rlItem?Math.pow(1.2,rlItem.star-1):1}else{a.relicMult=1}
   });
   // 敌方英雄特殊初始化
   B.enemies.forEach(e=>{
@@ -7319,6 +7347,7 @@ function startArena(){
     if(e.id==='sange')e.taunt=true,e.tauntPerm=true;
     if(e.id==='zhangxuyang')e.hp=Math.round(e.maxHp/5);
     if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true;
+    e.relicMult=e.relic?Math.pow(1.2,5):1; // 敌方默认5星倍率
   });
   // 邓力凯被动：全体友军速度+1
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
@@ -7593,7 +7622,7 @@ function retreat(){
   if(!confirm('确认撤退？'))return;
   stopBGM();
   const wasEndless=B&&B.isEndless;
-  // 无尽模式撤退按失败处理
+  // 无尽模式撤退按失败处理（同样给安慰奖励）
   if(wasEndless&&endlessState){
     const es=endlessState;
     // 累积统计
@@ -7605,11 +7634,55 @@ function retreat(){
         es.totalHeal[u.uid]=(es.totalHeal[u.uid]||0)+st.heal;
       });
     }
+    // 走失败奖励逻辑
     const cleared=es.wave-1;
     G.endlessLast=cleared;
     if(!G.endlessBest||cleared>G.endlessBest)G.endlessBest=cleared;
+    // 给安慰奖励
+    const goldBase=Math.round((5000+cleared*3000+Math.max(0,cleared-10)*Math.max(0,cleared-10)*600)*0.6);
+    if(goldBase>0)G.gold+=goldBase;
+    if(cleared>=3){
+      const heroCount=Math.min(6,Math.floor(cleared/3));
+      for(let i=0;i<heroCount;i++){
+        const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
+        const minS=Math.min(6,Math.max(1,Math.floor(cleared/5)));
+        const maxS=Math.min(6,Math.ceil(cleared/4));
+        const star=ri(Math.min(minS,maxS),Math.max(minS,maxS));
+        const uid=G.uid++;
+        let hRank=0;
+        if(cleared>=8&&Math.random()<0.2)hRank=ri(1,Math.min(4,Math.floor(cleared/5)));
+        addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:hRank});
+      }
+    }
+    if(cleared>=3){
+      const eqCount=Math.min(5,Math.floor(cleared/3));
+      for(let i=0;i<eqCount;i++){
+        const eqKeys=Object.keys(EQ),eid=eqKeys[ri(0,eqKeys.length-1)];
+        const minS=Math.min(6,Math.max(1,Math.floor(cleared/6)));
+        const maxS=Math.min(6,Math.ceil(cleared/4));
+        const eqStar=ri(Math.min(minS,maxS),Math.max(minS,maxS));
+        const eqUid=G.eqUid++;
+        let eqRank=0;
+        if(cleared>=6&&Math.random()<0.2)eqRank=ri(1,Math.min(5,Math.floor(cleared/4)));
+        addEquip({id:eid,star:eqStar,uid:eqUid,rank:eqRank});
+      }
+    }
+    if(cleared>=5){
+      const relicCount=Math.min(3,Math.floor(cleared/5));
+      const rKeys=Object.keys(RELICS);
+      for(let i=0;i<relicCount;i++){
+        const rid=rKeys[ri(0,rKeys.length-1)];
+        const minS=Math.min(6,Math.max(1,Math.floor(cleared/6)));
+        const maxS=Math.min(6,Math.ceil(cleared/4));
+        const rs=ri(Math.min(minS,maxS),Math.max(minS,maxS));
+        const rUid=G.relicUid++;
+        addRelic({id:rid,star:rs,uid:rUid});
+      }
+    }
     checkEndlessAch(cleared);
     endlessState=null;
+    saveGame();
+    toast(`撤退成功！通关${cleared}关，已发放安慰奖励`);
   }
   const wasArena=B&&B.isArena;
   const wasRealm=B&&B.isRealm;
@@ -8447,6 +8520,12 @@ function renderRelicCodexModal(id,star,owned,ownedStars){
           '<div style="color:var(--text2)">通用圣遗物</div>'}
       </div>
     </div>
+    <div class="cd-modal-section">
+      <div class="cd-modal-section-title">适配推荐</div>
+      <div style="font-size:11px;color:var(--text2);text-align:center;line-height:1.6">
+        ${getRelicRecommendations(id)}
+      </div>
+    </div>
     ${owned?`
     <div class="cd-modal-section">
       <div class="cd-modal-section-title">拥有</div>
@@ -8461,6 +8540,51 @@ function renderRelicCodexModal(id,star,owned,ownedStars){
 function switchRelicCodexStar(id,star,owned){
   const ownedStars=owned?[...new Set(G.relics.filter(r=>r.id===id).map(r=>r.star))].sort((a,b)=>a-b):[];
   renderRelicCodexModal(id,star,owned,ownedStars);
+}
+
+// 圣遗物适配推荐：根据圣遗物属性类型推荐受益最大的英雄
+function getRelicRecommendations(relicId){
+  const rl=RELICS[relicId];if(!rl)return'';
+  const hero=H[relicId];
+  const recs=[];
+  // 专属英雄永远是第一推荐
+  if(hero)recs.push({id:relicId,name:hero.name,reason:'专属·全额效果',img:hero.img});
+  // 根据圣遗物属性类型推荐其他英雄
+  const allHeroes=Object.values(H);
+  // 攻击加成 -> 推荐高攻击/输出英雄
+  if(rl.atkPct||rl.dmgPct||rl.armorPenPct||rl.comboPct){
+    allHeroes.filter(h=>h.id!==relicId&&(h.row==='front'||h.atk>=150)).slice(0,3).forEach(h=>{
+      recs.push({id:h.id,name:h.name,reason:'输出型·半效',img:h.img});
+    });
+  }
+  // 防御/生命加成 -> 推荐坦克
+  if(rl.defPct||rl.hpPct||rl.tauntReduce||rl.shieldPct){
+    allHeroes.filter(h=>h.id!==relicId&&h.def>=30).slice(0,3).forEach(h=>{
+      recs.push({id:h.id,name:h.name,reason:'坦克型·半效',img:h.img});
+    });
+  }
+  // 暴击加成 -> 推荐高暴击英雄
+  if(rl.critFlat||rl.cdmgFlat){
+    allHeroes.filter(h=>h.id!==relicId&&(h.crit>=5||h.cdmg>=1.5)).slice(0,3).forEach(h=>{
+      recs.push({id:h.id,name:h.name,reason:'暴击型·半效',img:h.img});
+    });
+  }
+  // 治疗加成 -> 推荐有治疗能力的英雄
+  if(rl.healPct||rl.regenExtraPct||rl.debuffHeal){
+    allHeroes.filter(h=>h.id!==relicId&&h.id!=='sange'&&(h.psDesc.includes('恢')||h.psDesc.includes('治')||h.skDesc.includes('恢')||h.skDesc.includes('治'))).slice(0,3).forEach(h=>{
+      recs.push({id:h.id,name:h.name,reason:'治疗型·半效',img:h.img});
+    });
+  }
+  // 吸血/连击 -> 推荐高攻速英雄
+  if(rl.lifestealPct||rl.atkLifesteal||rl.comboPct){
+    allHeroes.filter(h=>h.id!==relicId&&h.spd>=3).slice(0,2).forEach(h=>{
+      recs.push({id:h.id,name:h.name,reason:'高速型·半效',img:h.img});
+    });
+  }
+  // 去重（保留首次出现）
+  const seen=new Set();const unique=recs.filter(r=>{if(seen.has(r.id))return false;seen.add(r.id);return true});
+  if(!unique.length)return'<span style="color:var(--text2)">无特殊推荐</span>';
+  return unique.slice(0,5).map(r=>`<div style="margin:3px 0">${r.img?`<img src="${r.img}" style="width:24px;height:24px;border-radius:4px;vertical-align:middle" onerror="this.style.display='none'">`:''} <span style="color:${r.reason.includes('专属')?'var(--gold)':'#7eb5da'}">${r.name}</span> <span style="font-size:9px">(${r.reason})</span></div>`).join('');
 }
 
 // ============= ARENA PASSIVE INCOME =============
@@ -8937,15 +9061,17 @@ function genEndlessEnemies(wave){
         }
       }
       // 圣遗物
-      let hasRelic=false,relicId=null;
+      let hasRelic=false,relicId=null,relicStar=1;
       if(relicChance>0&&Math.random()<relicChance&&RELICS[hid]){
         hasRelic=true;relicId=hid;
+        relicStar=Math.min(6,Math.max(1,Math.ceil(es.wave/4))); // 敌方圣遗物星级随关卡
+        const rlM=Math.pow(1.2,relicStar-1);
         const rl=RELICS[hid];
-        if(rl.atkPct)atk+=Math.round(atk*rl.atkPct);
-        if(rl.defPct)def+=Math.round(def*rl.defPct);
-        if(rl.hpPct)hp+=Math.round(hp*rl.hpPct);
-        if(rl.critFlat)crit+=rl.critFlat;
-        if(rl.cdmgFlat)eqCdmg+=rl.cdmgFlat;
+        if(rl.atkPct)atk+=Math.round(atk*rl.atkPct*rlM);
+        if(rl.defPct)def+=Math.round(def*rl.defPct*rlM);
+        if(rl.hpPct)hp+=Math.round(hp*rl.hpPct*rlM);
+        if(rl.critFlat)crit+=Math.round(rl.critFlat*rlM);
+        if(rl.cdmgFlat)eqCdmg+=rl.cdmgFlat*rlM;
       }
       // 超阶倍率
       atk=Math.round(atk*overMult);def=Math.round(def*overMult);hp=Math.round(hp*overMult);
@@ -8955,7 +9081,7 @@ function genEndlessEnemies(wave){
         stun:0,bleed:0,atkBuff:0,atkBuffTurns:0,defBuff:0,defBuffTurns:0,defBuff2:0,
         skOn:false,kangwaUsed:false,revived:false,charmed:0,
         arenaEq:eqList,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,
-        relic:hasRelic,_relicId:relicId,_rank:heroRank,
+        relic:hasRelic,_relicId:relicId,_rank:heroRank,relicMult:hasRelic?Math.pow(1.2,relicStar-1):1,
         debuffImmune:hid==='swordsman'||hid==='xu'||hid==='ziranwupo',
         _heroEnemy:true,_heroId:hid});
     }else{
@@ -9088,19 +9214,84 @@ function endEndlessWave(vic){
     });
   }
   if(!vic){
-    // 失败：随机播放战败音乐，不结算
+    // 失败：按已通关数给丰厚安慰奖励（5万参与费不能白花）
     stopBGM();
     const loseEl=Math.random()<0.5?document.getElementById('sfxEndlessLose1'):document.getElementById('sfxEndlessLose2');
     if(loseEl){loseEl.currentTime=0;loseEl.play().catch(()=>{})}
-    G.endlessLast=es.wave-1;
-    if(!G.endlessBest||es.wave-1>G.endlessBest)G.endlessBest=es.wave-1;
+    const cleared=es.wave-1; // 已通关数
+    G.endlessLast=cleared;
+    if(!G.endlessBest||cleared>G.endlessBest)G.endlessBest=cleared;
     let rewHtml=`<div class="ri" style="color:#ff6600">🌀 无尽深渊 · 败北</div>`;
-    rewHtml+=`<div class="ri" style="color:var(--red)">止步于第 ${es.wave} 关</div>`;
-    rewHtml+=`<div class="ri" style="color:var(--text2)">失败不结算奖励</div>`;
+    rewHtml+=`<div class="ri" style="color:var(--red)">止步于第 ${es.wave} 关（通关 ${cleared} 关）</div>`;
+    // 金币奖励：失败也给，约为退出结算的60%
+    const goldBase=Math.round((5000+cleared*3000+Math.max(0,cleared-10)*Math.max(0,cleared-10)*600)*0.6);
+    if(goldBase>0){G.gold+=goldBase;rewHtml+=`<div class="ri">💰 安慰金币 +${formatDmg(goldBase)}</div>`;}
+    // 英雄奖励：每3关一个，星级略低于退出结算
+    if(cleared>=3){
+      const heroCount=Math.min(6,Math.floor(cleared/3));
+      for(let i=0;i<heroCount;i++){
+        const keys=Object.keys(H),hid=keys[ri(0,keys.length-1)];
+        const minS=Math.min(6,Math.max(1,Math.floor(cleared/5)));
+        const maxS=Math.min(6,Math.ceil(cleared/4));
+        const star=ri(Math.min(minS,maxS),Math.max(minS,maxS));
+        const uid=G.uid++;
+        let hRank=0;
+        if(cleared>=8&&Math.random()<0.2)hRank=ri(1,Math.min(4,Math.floor(cleared/5)));
+        addHero({id:hid,star,uid,eq:[null,null],relicUid:null,rank:hRank});
+        const rkStr=hRank>0?` 阶${hRank}`:'';
+        rewHtml+=`<div class="ri" style="color:#9b59b6">🃏 获得 ${H[hid].name} ${'★'.repeat(star)}${rkStr}</div>`;
+      }
+    }
+    // 装备奖励：每3关一个
+    if(cleared>=3){
+      const eqCount=Math.min(5,Math.floor(cleared/3));
+      for(let i=0;i<eqCount;i++){
+        const eqKeys=Object.keys(EQ),eid=eqKeys[ri(0,eqKeys.length-1)];
+        const minS=Math.min(6,Math.max(1,Math.floor(cleared/6)));
+        const maxS=Math.min(6,Math.ceil(cleared/4));
+        const eqStar=ri(Math.min(minS,maxS),Math.max(minS,maxS));
+        const eqUid=G.eqUid++;
+        let eqRank=0;
+        if(cleared>=6&&Math.random()<0.2)eqRank=ri(1,Math.min(5,Math.floor(cleared/4)));
+        addEquip({id:eid,star:eqStar,uid:eqUid,rank:eqRank});
+        const rkStr=eqRank>0?` 阶${eqRank}`:'';
+        rewHtml+=`<div class="ri">🔧 获得 ${EQ[eid].name} ${'★'.repeat(eqStar)}${rkStr}</div>`;
+      }
+    }
+    // 圣遗物奖励：每5关一个
+    if(cleared>=5){
+      const relicCount=Math.min(3,Math.floor(cleared/5));
+      const rKeys=Object.keys(RELICS);
+      for(let i=0;i<relicCount;i++){
+        const rid=rKeys[ri(0,rKeys.length-1)];
+        const minS=Math.min(6,Math.max(1,Math.floor(cleared/6)));
+        const maxS=Math.min(6,Math.ceil(cleared/4));
+        const rs=ri(Math.min(minS,maxS),Math.max(minS,maxS));
+        const rUid=G.relicUid++;
+        addRelic({id:rid,star:rs,uid:rUid});
+        rewHtml+=`<div class="ri" style="color:#9b59b6">🔮 获得 ${RELICS[rid].name} ${'★'.repeat(rs)}</div>`;
+      }
+    }
+    // 词条总结
+    if(es.buffs&&es.buffs.length){
+      rewHtml+=`<div style="margin:10px 0;font-size:12px;color:var(--text2)">── 获得词条 ──</div>`;
+      es.buffs.forEach(b=>{
+        rewHtml+=`<div style="font-size:11px;color:${EL_TIER[b.tier].color}">[${EL_TIER[b.tier].name}] ${b.name}: ${b.desc}</div>`;
+      });
+    }
+    // 输出统计
+    rewHtml+=`<div style="margin:10px 0;font-size:12px;color:var(--text2)">── 总输出统计 ──</div>`;
+    es.allies.forEach(a=>{
+      const dmg=es.totalDmg[a.uid]||0;
+      const abs=es.totalAbsorb[a.uid]||0;
+      const heal=es.totalHeal[a.uid]||0;
+      if(dmg+abs+heal>0)rewHtml+=`<div class="ri">${a.name} — 伤害:<span style="color:#e74c3c">${formatDmg(dmg)}</span> 承伤:<span style="color:#3498db">${formatDmg(abs)}</span> 治疗:<span style="color:#2ecc71">${formatDmg(heal)}</span></div>`;
+    });
     document.getElementById('resRew').innerHTML=rewHtml;
     document.getElementById('resCloseBtn').style.display='';
     endlessState=null;
-    checkEndlessAch(es.wave-1);
+    checkEndlessAch(cleared);
+    saveGame();
     return;
   }
   // 胜利：所有角色回复20%血量
@@ -9841,7 +10032,23 @@ function pvpStats(h,pd){
     atk+=Math.round(b.atk*eqMul);def+=Math.round(b.def*eqMul);hp+=Math.round(b.hp*eqMul);
     crit+=b.crit;spd+=b.spd;cdmg+=b.cdmg;
     eqDmgReduce+=b.dmgReduce;eqHealBoost+=b.healBoost;eqLifesteal+=b.lifesteal;eqThorns+=b.thorns})}
-  return{...d,atk,def,hp,maxHp:hp,cdmg:+cdmg.toFixed(2),crit,spd,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,star:h.star,uid:h.uid,relic:false,_relicId:null,rank};
+  // 圣遗物加成
+  let relicObj=null,relicId=null,relicMult=1;
+  if(h.relicUid){
+    const rData=pd.relics?pd.relics.find(r=>r.uid===h.relicUid):null;
+    if(rData){relicId=rData.id;relicObj=rData;relicMult=Math.pow(1.2,rData.star-1);
+      const rl=RELICS[rData.id];const isOwn=rData.id===h.id;const eff=isOwn?1:0.5;
+      if(rl){
+        if(rl.atkPct)atk=Math.round(atk*(1+rl.atkPct*relicMult*eff));
+        if(rl.defPct)def=Math.round(def*(1+rl.defPct*relicMult*eff));
+        if(rl.hpPct)hp=Math.round(hp*(1+rl.hpPct*relicMult*eff));
+        if(rl.critFlat)crit+=Math.round(rl.critFlat*relicMult*eff);
+        if(rl.cdmgFlat)cdmg+=rl.cdmgFlat*relicMult*eff;
+        if(rl.healPct)eqHealBoost+=Math.round(rl.healPct*100*relicMult*eff);
+      }
+    }
+  }
+  return{...d,atk,def,hp,maxHp:hp,cdmg:+cdmg.toFixed(2),crit,spd,eqDmgReduce,eqHealBoost,eqLifesteal,eqThorns,star:h.star,uid:h.uid,relic:!!relicObj,_relicId:relicId,relicMult,rank};
 }
 
 function endPvpBattle(vic){
