@@ -4687,7 +4687,7 @@ async function runBattle(){
             const heal=Math.round(eWupo.atk*1);const healed=applyHeal(a,heal);
             if(healed>0){eTotalH+=healed;showDmg(a.uid,healed,'heal')}
           }
-          if(eTotalH>0)B.log.push(`<span style="color:#27ae60">${eWupo.name} 自然之力！敌军恢复${eTotalH}HP</span>`);
+          if(eTotalH>0)B.log.push(`<span style="color:#27ae60">${eWupo.name} 自然之力！友军恢复${eTotalH}HP</span>`);
         }
          // 蔡总被动：每回合开始给生命最低队友1.5倍攻击血盾
          const caizongAlive=B.allies.find(a=>a.hp>0&&a.id==='caizong');
@@ -10069,6 +10069,9 @@ let olSelectedHeroUid=null;
 let olServerMode='local'; // 'local' | 'cloud'
 let olReconnectCount=0; // 重连计数
 let olMaxReconnect=5; // 最大重连次数
+let olBattleTimeout=0; // 客户端战斗超时计数（秒）
+let olBattleEndTimeout=0; // 客户端战斗结束超时计数（秒）
+let olBattleActive=false; // 客户端是否在战斗中
 
 // ICE服务器配置（含国内STUN+TURN中继）
 function olGetIceServers(){
@@ -10188,6 +10191,7 @@ function olCleanup(){
   olRole=null;olRoomCode=null;olMyData=null;olOpponentData=null;
   olMyConfirmed=false;olOpponentConfirmed=false;olSelectedHeroUid=null;
   olReconnectCount=0;
+  olBattleActive=false;olBattleTimeout=0;olBattleEndTimeout=0;
 }
 
 function olCreateRoom(){
@@ -10391,6 +10395,9 @@ function olHandleMsg(msg){
         const span=document.createElement('div');
         span.style.cssText='padding:2px 0;border-bottom:1px solid #1a1a2e';
         let html=entry;
+        // 客户端视角转换：互换蓝红标记 + 友军/敌军
+        html=html.split('(蓝)').join('\x00TEMP\x00').split('(红)').join('(蓝)').split('\x00TEMP\x00').join('(红)');
+        html=html.split('友军').join('\x00T2\x00').split('敌军').join('友军').split('\x00T2\x00').join('敌军');
         html=html.replace(/(回合 \d+)/g,'<b style="color:#f39c12">$1</b>');
         html=html.replace(/(暴击| crit)/gi,'<span style="color:#e74c3c;font-weight:bold">$1</span>');
         html=html.replace(/(格挡|闪避)/g,'<span style="color:#3498db">$1</span>');
@@ -10402,10 +10409,14 @@ function olHandleMsg(msg){
         logDiv.appendChild(span);
       });
       logDiv.scrollTop=logDiv.scrollHeight;
+      // 重置客户端战斗超时计时器（仍在收到数据，连接正常）
+      olBattleTimeout=0;
+      olBattleEndTimeout=0;
     }
   }
   
   else if(mtype==='battle_end'){
+    olBattleActive=false;
     document.getElementById('olBattleResult').style.display='';
     const myWin=msg.winner===olRole;
     document.getElementById('olBattleResult').innerHTML=`<div style="font-size:24px;font-weight:bold;margin:8px 0">${myWin?'🎉 你赢了！':'💔 你输了...'}</div>
@@ -10645,6 +10656,10 @@ function olStartBattle(){
   }else{
     // 客户端等待日志
     document.getElementById('olBattleLog').innerHTML='<div style="color:var(--text2)">等待房主战斗数据...</div>';
+    // 启动客户端战斗超时检测
+    olBattleActive=true;
+    olBattleTimeout=0;
+    olBattleEndTimeout=0;
   }
 }
 
@@ -10692,14 +10707,28 @@ function olRunHostBattle(){
   B.allies.forEach(a=>{if(a.id==='denglikai')B.allies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
   B.enemies.forEach(e=>{if(e.id==='denglikai')B.enemies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
   
-  // 监听战斗日志发送给客户端
+  // 监听战斗日志发送给客户端（自动添加敌我方标记）
   const origLog=B.log;
   B._olLogBuffer=[];
+  // 构建单位名→标记映射（按名字长度降序，避免短名匹配到长名子串）
+  function _tagLogEntry(entry){
+    if(!B||!B.isOnlinePvp)return entry;
+    const allUnits=[...B.allies,...B.enemies].sort((a,b)=>b.name.length-a.name.length);
+    for(const u of allUnits){
+      const tag=u.isE?'(红)':'(蓝)';
+      const escaped=u.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      // 只替换第一个未被标记的出现（用负向前瞻避免重复标记）
+      const regex=new RegExp(escaped+'(?!\\((?:蓝|红)\\))');
+      entry=entry.replace(regex,u.name+tag);
+    }
+    return entry;
+  }
   B.log=new Proxy([],{
     get(target,prop){
       if(prop==='push')return function(...args){
-        target.push(...args);
-        B._olLogBuffer.push(...args);
+        const processed=args.map(_tagLogEntry);
+        target.push(...processed);
+        B._olLogBuffer.push(...processed);
         return target.length;
       };
       return target[prop];
@@ -10737,6 +10766,37 @@ setInterval(()=>{
     olSend({type:'ping'});
   }
 },30000);
+
+// 客户端战斗超时检测：每5秒检查一次
+setInterval(()=>{
+  if(!olBattleActive)return;
+  olBattleTimeout+=5;
+  olBattleEndTimeout+=5;
+  // 30秒没收到任何战斗日志 → 房主可能掉线
+  if(olBattleTimeout>=30&&olBattleEndTimeout<60){
+    const logDiv=document.getElementById('olBattleLog');
+    if(logDiv){
+      const warn=document.createElement('div');
+      warn.style.cssText='color:#e74c3c;padding:4px;text-align:center';
+      warn.textContent='⚠ 等待房主数据超时，可能正在重连...';
+      logDiv.appendChild(warn);
+      logDiv.scrollTop=logDiv.scrollHeight;
+    }
+    olBattleTimeout=0; // 重置，给更多时间
+  }
+  // 60秒没收到任何日志或battle_end → 判定断线
+  if(olBattleEndTimeout>=60){
+    olBattleActive=false;
+    const logDiv=document.getElementById('olBattleLog');
+    if(logDiv){
+      const err=document.createElement('div');
+      err.style.cssText='color:#e74c3c;padding:8px;text-align:center;font-size:14px';
+      err.innerHTML='⚠ 与房主失去连接，战斗中断<br><button class="med-btn" style="background:linear-gradient(180deg,#3498db,#2980b9);padding:6px 16px;margin-top:8px" onclick="olLeaveRoom()">返回大厅</button>';
+      logDiv.appendChild(err);
+      logDiv.scrollTop=logDiv.scrollHeight;
+    }
+  }
+},5000);
 
 function rPvp(){}
 
