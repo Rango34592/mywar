@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mywar-v5';
-const IMG_CACHE = 'mywar-img-v1';
-const MUSIC_CACHE = 'mywar-music-v1';
+const CACHE_NAME = 'mywar-v6';
+const IMG_CACHE = 'mywar-img-v2';
+// 音乐不再缓存，按需从网络加载，大幅减少iPad存储占用
 
 // Core files to precache on install
 const PRECACHE_URLS = [
@@ -9,7 +9,7 @@ const PRECACHE_URLS = [
   './manifest.json'
 ];
 
-// Install: precache core files only (images/music cached on first use)
+// Install: precache core files only
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -18,11 +18,11 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: clean old caches
+// Activate: clean old caches (including old music cache)
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== IMG_CACHE && k !== MUSIC_CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== IMG_CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -35,13 +35,13 @@ self.addEventListener('fetch', event => {
   // Skip non-GET
   if (event.request.method !== 'GET') return;
 
-  // Music files: cache-first (cache when played)
+  // Music files: network-only, never cache (save iPad storage)
   if (path.includes('mywar音乐/') || path.endsWith('.mp3')) {
-    event.respondWith(cacheFirst(event.request, MUSIC_CACHE));
+    event.respondWith(fetch(event.request).catch(() => new Response('', { status: 503 })));
     return;
   }
 
-  // Image files: cache-first
+  // Image files: cache-first (images are small after compression)
   if (path.includes('装备图片/') || path.includes('英雄图片/') || path.includes('怪物图片/')) {
     event.respondWith(cacheFirst(event.request, IMG_CACHE));
     return;
