@@ -1873,29 +1873,29 @@ function imgUrl(p){return p?encodeURI(p):p}
 // ============= HERO DEFINITIONS =============
 const H = {
   swordsman:{id:'swordsman',name:'剑士',img:'英雄图片/剑士.jpg',atk:150,def:30,hp:1000,cdmg:1.5,crit:5,spd:3,
-    sk:'五连斩',skDesc:'对目标造成5段伤害，每段70%攻击（减去防御）',skCd:60,
+    sk:'五连斩',skDesc:'对目标造成5段伤害，每段80%攻击（减去防御）',skCd:60,
     ps:'意志坚韧',psDesc:'无视一切敌方对自己释放的负面效果',row:'front',rng:'melee'},
-  shield:{id:'shield',name:'盾狗',img:'英雄图片/盾狗.jpg',atk:100,def:45,hp:1000,cdmg:1.5,crit:5,spd:1,
+  shield:{id:'shield',name:'盾狗',img:'英雄图片/盾狗.jpg',atk:100,def:45,hp:1200,cdmg:1.5,crit:5,spd:1,
     sk:'铁壁嘲讽',skDesc:'嘲讽所有敌人，恢复一半总生命',skCd:60,
     ps:'开局铁壁',psDesc:'前三回合防御力翻倍',row:'front',rng:'melee'},
   priest:{id:'priest',name:'牧师',img:'英雄图片/牧师.jpg',atk:100,def:20,hp:800,cdmg:1.5,crit:5,spd:2,
     sk:'群体治愈',skDesc:'恢复所有队友等量于自己2倍攻击的血量',skCd:60,
     ps:'圣光庇护',psDesc:'每回合结束时，治疗血量最低的友军15%最大生命',row:'back',rng:'ranged'},
-  miner:{id:'miner',name:'矿工',img:'英雄图片/矿工.jpg',atk:130,def:30,hp:800,cdmg:1.5,crit:5,spd:2,
-    sk:'后排爆破',skDesc:'对敌方后排所有单位造成1.9倍伤害，30%概率挖到金子(2倍伤害治疗量)',skCd:60,
+  miner:{id:'miner',name:'矿工',img:'英雄图片/矿工.jpg',atk:130,def:30,hp:900,cdmg:1.5,crit:5,spd:2,
+    sk:'后排爆破',skDesc:'对敌方后排所有单位造成2.3倍伤害，30%概率挖到金子(2倍伤害治疗量)',skCd:60,
     ps:'后排猎手',psDesc:'优先索敌后排',row:'back',rng:'ranged'},
-  boxer:{id:'boxer',name:'拳击手',img:'英雄图片/拳击手.jpg',atk:200,def:20,hp:1000,cdmg:1.5,crit:5,spd:4,
+  boxer:{id:'boxer',name:'拳击手',img:'英雄图片/拳击手.jpg',atk:180,def:20,hp:1000,cdmg:1.5,crit:5,spd:4,
     sk:'毁灭之拳',skDesc:'对单体造成3倍伤害，70%概率眩晕2回合',skCd:90,
     ps:'连击本能',psDesc:'行动后25%概率额外普攻一次',row:'front',rng:'melee'},
   // ===== 12位新英雄 =====
   squirrel:{id:'squirrel',name:'松鼠唐刚森',img:'英雄图片/松鼠唐刚森.jpg',atk:110,def:30,hp:1000,cdmg:2.0,crit:5,spd:2,
     sk:'全体重击',skDesc:'对敌方全体造成1.5倍伤害，降低50%防御2回合',skCd:40,
     ps:'驱散之力',psDesc:'攻击清除敌人的暂时强化',row:'back',rng:'ranged'},
-  kangwa:{id:'kangwa',name:'亢娃儿',img:'英雄图片/亢娃儿.jpg',atk:90,def:30,hp:1500,cdmg:1.5,crit:5,spd:1,
+  kangwa:{id:'kangwa',name:'亢娃儿',img:'英雄图片/亢娃儿.jpg',atk:105,def:30,hp:1500,cdmg:1.5,crit:5,spd:1,
     sk:'吸血之咬',skDesc:'吸取随机一个敌人，无视防御，伤害和回血量等于生命上限1/5，嘲讽目标2回合',skCd:60,
     ps:'坚韧躯体',psDesc:'血量低于1/3时减伤30%',row:'front',rng:'melee'},
-  xu:{id:'xu',name:'胥',img:'英雄图片/胥.jpg',atk:80,def:40,hp:1400,cdmg:1.5,crit:5,spd:2,
-    sk:'横排猛击',skDesc:'对一排敌人造成2倍伤害，50%概率眩晕2回合',skCd:50,
+  xu:{id:'xu',name:'胥',img:'英雄图片/胥.jpg',atk:100,def:40,hp:1400,cdmg:1.5,crit:5,spd:2,
+    sk:'横排猛击',skDesc:'对一排敌人造成2.5倍伤害，50%概率眩晕2回合',skCd:50,
     ps:'意志坚定',psDesc:'无视一切负面效果',row:'front',rng:'melee'},
   tangxi:{id:'tangxi',name:'糖稀',img:'英雄图片/糖稀.jpg',atk:120,def:10,hp:1000,cdmg:1.5,crit:5,spd:3,
     sk:'流血连斩',skDesc:'对任意一个敌人造成4段伤害，敌人流血3回合（每回合受糖稀攻击等量真伤）',skCd:60,
@@ -1914,14 +1914,14 @@ const H = {
     ps:'嗜血战意',psDesc:'恢复造成伤害的50%生命',row:'front',rng:'melee'},
   lanski:{id:'lanski',name:'兰斯基',img:'英雄图片/兰斯基.jpg',atk:130,def:20,hp:800,cdmg:1.5,crit:10,spd:3,
     sk:'双星打击',skDesc:'对两个敌人造成2.5倍伤害，50%概率眩晕，恢复2倍攻击等量生命',skCd:40,
-    ps:'治疗光环',psDesc:'我方所有恢复血量翻倍',row:'back',rng:'ranged'},
-  songdi:{id:'songdi',name:'宋迪',img:'英雄图片/宋迪.jpg',atk:80,def:30,hp:1300,cdmg:1.5,crit:5,spd:1,
-    sk:'固守壁垒',skDesc:'恢复5倍攻击的生命，防御提升100%持续2回合',skCd:50,
+    ps:'治疗光环',psDesc:'我方所有治疗量+50%',row:'back',rng:'ranged'},
+  songdi:{id:'songdi',name:'宋迪',img:'英雄图片/宋迪.jpg',atk:95,def:30,hp:1300,cdmg:1.5,crit:5,spd:1,
+    sk:'固守壁垒',skDesc:'恢复6倍攻击的生命，防御提升100%持续2回合',skCd:50,
     ps:'荆棘反甲',psDesc:'受到伤害时反击（1倍伤害，无视防御）',row:'front',rng:'melee'},
   zhangxz:{id:'zhangxz',name:'张绪哲',img:'英雄图片/张绪哲.jpg',atk:90,def:20,hp:600,cdmg:2.5,crit:20,spd:4,
     sk:'乱影八斩',skDesc:'对一排敌人造成总共8次伤害，随机分配',skCd:50,
     ps:'后排猎杀',psDesc:'普攻和技能优先索敌后排',row:'back',rng:'ranged'},
-  zhangnv:{id:'zhangnv',name:'张女士',img:'英雄图片/张女士.jpg',atk:130,def:20,hp:1000,cdmg:8.0,crit:1,spd:3,
+  zhangnv:{id:'zhangnv',name:'张女士',img:'英雄图片/张女士.jpg',atk:130,def:20,hp:1000,cdmg:6.0,crit:1,spd:3,
     sk:'血祭强化',skDesc:'失去1/5当前生命，攻击防御加10%直到对战结束，普攻一下',skCd:40,
     ps:'绝境暴击',psDesc:'血量首次低于1/3时暴击率永久提升33.3%，敌军每死一人+10%暴击率',row:'front',rng:'melee'},
   // ===== 23位新英雄 =====
@@ -1931,8 +1931,8 @@ const H = {
   zhaoqing:{id:'zhaoqing',name:'赵晴',img:'英雄图片/赵晴.jpg',atk:140,def:20,hp:1200,cdmg:1.5,crit:5,spd:3,
     sk:'横排猛击+',skDesc:'对一排敌人造成2倍伤害，30%眩晕2回合',skCd:60,
     ps:'震荡打击',psDesc:'普攻50%概率眩晕敌人1回合，对眩晕敌人25%增伤',row:'front',rng:'melee'},
-  lanxianbing:{id:'lanxianbing',name:'兰显兵',img:'英雄图片/兰显兵.jpg',atk:95,def:15,hp:900,cdmg:1.5,crit:5,spd:2,
-    sk:'净化冲击',skDesc:'对所有敌人造成1.5倍伤害，清除所有敌军增益，恢复所有友军1倍血量',skCd:60,
+  lanxianbing:{id:'lanxianbing',name:'兰显兵',img:'英雄图片/兰显兵.jpg',atk:110,def:15,hp:900,cdmg:1.5,crit:5,spd:2,
+    sk:'净化冲击',skDesc:'对所有敌人造成1.5倍伤害，清除所有敌军增益，恢复所有友军1.5倍血量',skCd:60,
     ps:'驱散攻击',psDesc:'攻击净化敌人增益，普攻为全体攻击',row:'back',rng:'ranged'},
   sange:{id:'sange',name:'三哥',img:'英雄图片/三哥.jpg',atk:80,def:35,hp:1400,cdmg:1.5,crit:5,spd:1,
     sk:'背水一战',skDesc:'对单体造成8倍真实伤害（无视防御/护盾），自身每损失10%血量额外+1倍；命中后恢复造成伤害30%的生命',skCd:45,
@@ -1940,7 +1940,7 @@ const H = {
   yuedeng:{id:'yuedeng',name:'月登',img:'英雄图片/月登.jpg',atk:120,def:10,hp:1100,cdmg:1.5,crit:5,spd:2,
     sk:'毒雾弥漫',skDesc:'对敌方全体造成1.2倍伤害，100%中毒2回合（毒伤=月登攻击50%，无视防御）',skCd:60,
     ps:'毒伤增幅',psDesc:'对中毒单位伤害+30%',row:'back',rng:'ranged'},
-  kk:{id:'kk',name:'KK',img:'英雄图片/KK.jpg',atk:100,def:15,hp:900,cdmg:2.0,crit:5,spd:3,
+  kk:{id:'kk',name:'KK',img:'英雄图片/KK.jpg',atk:115,def:15,hp:900,cdmg:2.0,crit:5,spd:3,
     sk:'双刃穿透',skDesc:'对两个敌人造成2.5倍伤害',skCd:60,
     ps:'无视防御',psDesc:'攻击无视防御',row:'back',rng:'ranged'},
   lanxianfu:{id:'lanxianfu',name:'兰显富',img:'英雄图片/兰显富.jpg',atk:130,def:30,hp:1300,cdmg:1.5,crit:5,spd:1,
@@ -1964,20 +1964,20 @@ const H = {
   denglikai:{id:'denglikai',name:'邓力凯',img:'英雄图片/邓力凯.jpg',atk:80,def:10,hp:800,cdmg:1.5,crit:5,spd:2,
     sk:'激励冲锋',skDesc:'恢复最低友军70%生命，让攻击最高友军立即行动',skCd:60,
     ps:'全军加速',psDesc:'全体友军速度+1，防御+20%',row:'back',rng:'ranged'},
-  caolaou:{id:'caolaou',name:'曹老鸥',img:'英雄图片/曹老鸥.jpg',atk:90,def:20,hp:1300,cdmg:1.5,crit:5,spd:3,
+  caolaou:{id:'caolaou',name:'曹老鸥',img:'英雄图片/曹老鸥.jpg',atk:90,def:25,hp:1300,cdmg:1.5,crit:5,spd:3,
     sk:'群体守护',skDesc:'所有友军减伤30%持续2回合，期间友军免疫负面',skCd:60,
-    ps:'前排铁壁',psDesc:'己方前排获得10%免伤',row:'front',rng:'melee'},
+    ps:'前排铁壁',psDesc:'己方前排获得15%免伤',row:'front',rng:'melee'},
   daxiong:{id:'daxiong',name:'达兄',img:'英雄图片/达兄.jpg',atk:90,def:10,hp:900,cdmg:1.5,crit:5,spd:2,
     sk:'虚弱诅咒',skDesc:'对敌方全体造成1倍伤害，降低90%防御和99%治疗量持续2回合',skCd:60,
-    ps:'减速光环',psDesc:'所有敌军速度-2',row:'back',rng:'ranged'},
-  zhangxuyang:{id:'zhangxuyang',name:'张绪阳',img:'英雄图片/张绪阳.jpg',atk:50,def:0,hp:4000,cdmg:5.0,crit:50,spd:4,
+    ps:'减速光环',psDesc:'所有敌军速度-1',row:'back',rng:'ranged'},
+  zhangxuyang:{id:'zhangxuyang',name:'张绪阳',img:'英雄图片/张绪阳.jpg',atk:50,def:0,hp:3200,cdmg:4.0,crit:50,spd:4,
     sk:'献祭复活',skDesc:'扣除1/4血量，复活一个友军(15%生命)',skCd:60,
     ps:'治疗翻倍',psDesc:'获得的治疗量翻倍，进场只有生命上限1/5',row:'back',rng:'ranged'},
   birdman:{id:'birdman',name:'BirdMan',img:'英雄图片/BirdMan.jpg',atk:100,def:25,hp:1200,cdmg:1.5,crit:5,spd:1,
     sk:'碎甲重击',skDesc:'对单体造成4倍伤害，减少敌方99%防御',skCd:60,
     ps:'毒羽',psDesc:'攻击BirdMan的敌人50%中毒2回合',row:'front',rng:'melee'},
-  mage:{id:'mage',name:'马哥',img:'怪物图片/马哥.jpg',atk:110,def:10,hp:1000,cdmg:1.5,crit:5,spd:4,
-    sk:'狂暴冲锋',skDesc:'攻击+100%持续3回合，减15%生命，立刻普攻',skCd:60,
+  mage:{id:'mage',name:'马哥',img:'怪物图片/马哥.jpg',atk:110,def:15,hp:1000,cdmg:1.5,crit:5,spd:4,
+    sk:'狂暴冲锋',skDesc:'攻击+120%持续3回合，减10%生命，立刻普攻',skCd:60,
     ps:'血怒',psDesc:'每失去5%生命，暴击率+2%',row:'front',rng:'melee'},
   jimmy:{id:'jimmy',name:'Jimmy',img:'英雄图片/Jimmy.jpg',atk:170,def:25,hp:1400,cdmg:2.0,crit:10,spd:3,
     sk:'致命斩击',skDesc:'对单体造成4倍伤害，流血2回合',skCd:60,
@@ -4246,7 +4246,7 @@ function startLevel(lv){
   // 邓力凯被动：全体友军速度+1
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   // 达兄被动：敌军速度-2
-  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2;});
+  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1;});
   // 张继华被动：友军暴击+5%
   if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   // Dongrab被动：后排暴击+5%
@@ -4254,7 +4254,7 @@ function startLevel(lv){
   // NTTT被动：全体友军+15%伤害
   if(B.allies.some(a=>a.hp>0&&a.id==='nttt'))B.allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*ntttBuffPct())});
   // 曹老鸥被动：前排减伤10%
-  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
+  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
   // 怪物被动初始化
   B.enemies.forEach(e=>{
     // 刺客：开局隐身1回合
@@ -4446,7 +4446,7 @@ function checkNextWave(){
       if(e.name==='狼王'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;B.enemies.forEach(ally=>{ally.spd+=1});e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
       if(e.name==='狼头人'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.04*alive);e.atkBuffTurns=99}
       if(e.name==='马哥'&&B.enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.2);e.atkBuffTurns=99;e.spd+=1}
-      if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.15}})}
+      if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.155}})}
       if(e.name==='法老棺椁')e._noCrit=true;
     });
     B.round=1;B.turnIdx=0;
@@ -5208,9 +5208,9 @@ function applyHeal(target,rawHeal){
   let h=rawHeal;
   if(target.healReduceAmt>0){const orig=h;h=Math.round(h*(1-target.healReduceAmt));if(orig!==h)B.log.push(`<span style="color:#e74c3c">${target.name} 被减疗！治疗${orig}→${h}</span>`)}
   if(target.id==='zhangxuyang')h*=2; // 治疗翻倍被动
-  // 兰斯基被动：我方恢复血量翻倍
-  if(!target.isE&&B.allies.some(a=>a.hp>0&&a.id==='lanski'))h*=2;
-  if(target.isE&&B.enemies.some(e=>e.hp>0&&e.id==='lanski'))h*=2;
+  // 兰斯基被动：我方治疗量+50%
+  if(!target.isE&&B.allies.some(a=>a.hp>0&&a.id==='lanski'))h=Math.round(h*1.5);
+  if(target.isE&&B.enemies.some(e=>e.hp>0&&e.id==='lanski'))h=Math.round(h*1.5);
   // Equipment heal boost
   if(target.eqHealBoost>0){const orig=h;h=Math.round(h*(1+target.eqHealBoost/100));if(h!==orig)B.log.push(`<span style="color:#2ecc71">💚 ${target.name} 治疗加成${target.eqHealBoost}%！${orig}→${h}</span>`)}
   // 牧师圣遗物：治疗量+10%（受星级影响）
@@ -5298,9 +5298,9 @@ async function execAttackAnim(actor,allies,enemies,label){
     const healed=applyHeal(actor,selfHeal);
     if(healed>0){showDmg(actor.uid,healed,'heal');bHeal(actor.uid,healed)}
   }
-  // 宋迪被动：受击反击1倍
+  // 宋迪被动：受击反击1.5倍
   if(actual.id==='songdi'&&actual.hp>0){
-    const counterRaw=Math.max(1,actual.atk*1);
+    const counterRaw=Math.max(1,Math.round(actual.atk*1.5));
     const counterDmg=applyDmg(actual,actor,counterRaw);
     if(counterDmg>0){
       sfx('crit');
@@ -6383,7 +6383,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       for(let i=0;i<5;i++){
         if(actual.hp<=0){const nxt=enemies.find(e=>e.hp>0);if(!nxt)break;actual=nxt}
         const def=actual.def+(actual.defBuff||0);
-        let dmg=Math.max(1,Math.round(actor.atk*.7)-def);
+        let dmg=Math.max(1,Math.round(actor.atk*.8)-def);
         if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
         const rd=applyDmg(actor,actual,dmg);total+=rd;
         if(actual.hp<=0){const nxt=enemies.find(e=>e.hp>0);if(!nxt)break;actual=nxt}
@@ -6425,7 +6425,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       if(!tgts.length)tgts=enemies.filter(e=>e.hp>0);
       for(const e of tgts){
         const def=e.def+(e.defBuff||0);
-        let dmg=Math.max(1,Math.round(actor.atk*1.8)-def);
+        let dmg=Math.max(1,Math.round(actor.atk*2.3)-def);
         const rd=applyDmg(actor,e,dmg);
         await animClass(e.uid,'anim-hit',300);
         showDmg(e.uid,rd,'skill');shakeScreen();
@@ -6511,7 +6511,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       let total=0;let stunned=0;
       for(const e of tgts){
         const def=e.def+(e.defBuff||0);
-        let dmg=Math.max(1,Math.round(actor.atk*2)-def);
+        let dmg=Math.max(1,Math.round(actor.atk*2.5)-def);
         if(Math.random()*100<actor.crit)dmg=Math.round(dmg*actor.cdmg);
         const rd=applyDmg(actor,e,dmg);total+=rd;
         if(Math.random()<0.5){e.stun=(e.stun||0)+2;stunned++}
@@ -6568,7 +6568,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
         e.atkBuff=0;e.atkBuffTurns=0;e.defBuff=0;e.defBuffTurns=0;e.shield=0;e.dmgReduce=0;e.dmgReduceAmt=0;
         await animClass(e.uid,'anim-hit',300);showDmg(e.uid,rd,'skill');await wait(200/G.spd);
       }
-      for(const a of allies){if(a.hp>0){const healAmt=Math.round(actor.atk);const healed=applyHeal(a,healAmt);if(healed>0)bHeal(actor.uid,healed)}}
+      for(const a of allies){if(a.hp>0){const healAmt=Math.round(actor.atk*1.5);const healed=applyHeal(a,healAmt);if(healed>0)bHeal(actor.uid,healed)}}
       shakeScreen();B.log.push(`<span style="color:var(--red)">${actor.name} 净化斩 → ${total}总伤害+全队恢复</span>`);break;
     }
     case 'sange':{
@@ -6636,7 +6636,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       for(let i=0;i<cnt;i++){
         const e=alive[i];const def=e.def+(e.defBuff||0);
         let dmg=Math.max(1,Math.round(actor.atk*2)-def);
-        const rd=applyDmg(actor,e,dmg);total+=rd;e.spdReduce=2;e.spdReduceAmt=2;
+        const rd=applyDmg(actor,e,dmg);total+=rd;e.spdReduce=2;e.spdReduceAmt=1;
         if(Math.random()<0.5){addPoison(e,Math.round(actor.atk*0.5),2)}
         await animClass(e.uid,'anim-hit',300);showDmg(e.uid,rd,'skill');await wait(200/G.spd);
       }
@@ -6721,12 +6721,12 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
       B.log.push(`<span style="color:var(--red)">${actor.name} 碎甲重击 → ${actual.name} ${rd}伤害+99%减防</span>`);break;
     }
     case 'mage':{
-      actor.atkBuff=(actor.atkBuff||0)+_origAtkH;actor.atkBuffTurns=3;
-      const hpCost=Math.round(actor.maxHp*0.15);actor.hp-=hpCost;
+      actor.atkBuff=(actor.atkBuff||0)+Math.round(_origAtkH*1.2);actor.atkBuffTurns=3;
+      const hpCost=Math.round(actor.maxHp*0.10);actor.hp-=hpCost;
       screenFlash('gold');
       // free attack
       await execAttackAnim(actor,allies,enemies,'增幅攻击');
-      B.log.push(`<span style="color:var(--red)">${actor.name} 暗影增幅！攻+100%</span>`);break;
+      B.log.push(`<span style="color:var(--red)">${actor.name} 暗影增幅！攻+120%</span>`);break;
     }
     case 'jimmy':{
       const tgt=findTarget(actor,enemies);if(!tgt)break;
@@ -6971,7 +6971,7 @@ async function execHeroSkill(actor,allies,enemies,_skipAnim){
     }
     // ===== 宋迪：固守壁垒 =====
     case 'songdi':{
-      const heal=Math.round(actor.atk*5);
+      const heal=Math.round(actor.atk*6);
       const healed=applyHeal(actor,heal);bHeal(actor.uid,healed);
       actor.defBuff=(actor.defBuff||0)+actor.def;actor.defBuffTurns=2;
       await animClass(actor.uid,'anim-heal-glow',700);
@@ -7356,8 +7356,8 @@ function startArena(){
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(B.enemies.some(e=>e.hp>0&&e.id==='denglikai'))B.enemies.forEach(e=>{e.spd+=1;e.defBuff=(e.defBuff||0)+Math.round(e.def*0.2)});
   // 达兄被动：敌军速度-2
-  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2;});
-  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=2;});
+  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1;});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1;});
   // 张继华被动：友军暴击+5%暴伤+50%
   if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(B.enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))B.enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
@@ -7368,8 +7368,8 @@ function startArena(){
   if(B.allies.some(a=>a.hp>0&&a.id==='nttt'))B.allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*ntttBuffPct())});
   if(B.enemies.some(e=>e.hp>0&&e.id==='nttt'))B.enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*ntttBuffPctE())});
   // 曹老鸥被动：前排减伤10%
-  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
-  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.1});
+  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.15});
   // 怪物被动初始化
   B.enemies.forEach(e=>{
     if(e.name==='刺客')e.stealth=1;
@@ -7382,7 +7382,7 @@ function startArena(){
     if(e.name==='狼王'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;B.enemies.forEach(ally=>{ally.spd+=1});e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
     if(e.name==='狼头人'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.04*alive);e.atkBuffTurns=99}
     if(e.name==='马哥'&&B.enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.2);e.atkBuffTurns=99;e.spd+=1}
-    if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.15}})}
+    if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.155}})}
     if(e.name==='法老棺椁')e._noCrit=true;
   });
   syncBattleUI();showScreen('battle');buildOrder();renderB();
@@ -7522,16 +7522,16 @@ function startTitanBattle(){
   });
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(B.enemies.some(e=>e.hp>0&&e.id==='denglikai'))B.enemies.forEach(e=>{e.spd+=1;e.defBuff=(e.defBuff||0)+Math.round(e.def*0.2)});
-  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2;});
-  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=2;});
+  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1;});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1;});
   if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(B.enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))B.enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
   if(B.allies.some(a=>a.hp>0&&a.id==='dongrab'))B.allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
   if(B.enemies.some(e=>e.hp>0&&e.id==='dongrab'))B.enemies.filter(e=>e.pos.row==='back').forEach(e=>{e.crit+=5});
   if(B.allies.some(a=>a.hp>0&&a.id==='nttt'))B.allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*ntttBuffPct())});
   if(B.enemies.some(e=>e.hp>0&&e.id==='nttt'))B.enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*ntttBuffPctE())});
-  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
-  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.1});
+  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.15});
   syncBattleUI();showScreen('battle');buildOrder();renderB();
   B.log.push(`<b style="color:#9b59b6">── 三巨头之战 ──</b>`);
   B.log.push(`<b style="color:var(--gold)">对手：${titan.icon} ${titan.name}</b>`);
@@ -7855,11 +7855,11 @@ function startWorldBossBattle(){
     if(a.id==='zhangxuyang')a.hp=Math.round(a.maxHp/5);
   });
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
-  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2;});
+  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1;});
   if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(B.allies.some(a=>a.hp>0&&a.id==='dongrab'))B.allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
   if(B.allies.some(a=>a.hp>0&&a.id==='nttt'))B.allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*ntttBuffPct())});
-  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
+  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
   syncBattleUI();showScreen('battle');buildOrder();renderB();
   B.log.push(`<b style="color:#ff4500">── 世界Boss：${boss.icon} ${boss.name} ──</b>`);
   B.log.push(`<b style="color:var(--gold)">── 回合 1 ──</b>`);
@@ -8848,7 +8848,7 @@ function startRealm(){
   if(allies.some(a=>a.hp>0&&a.id==='zhangjihua'))allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(allies.some(a=>a.hp>0&&a.id==='dongrab'))allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
   if(allies.some(a=>a.hp>0&&a.id==='nttt')){const pct=allies.find(a=>a.hp>0&&a.id==='nttt').relic?0.15*1.06:0.15;allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*pct)})}
-  if(allies.some(a=>a.hp>0&&a.id==='caolaou'))allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
+  if(allies.some(a=>a.hp>0&&a.id==='caolaou'))allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
   // Generate enemies
   const enemies=genRealmEnemies(diff);
   enemies.forEach((e,i)=>{
@@ -8866,10 +8866,10 @@ function startRealm(){
   if(enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
   if(enemies.some(e=>e.hp>0&&e.id==='dongrab'))enemies.filter(e=>e.pos.row==='back').forEach(e=>{e.crit+=5});
   if(enemies.some(e=>e.hp>0&&e.id==='nttt')){const pct=enemies.find(e=>e.hp>0&&e.id==='nttt').relic?0.15*1.06:0.15;enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*pct)})}
-  if(enemies.some(e=>e.hp>0&&e.id==='caolaou'))enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.1});
+  if(enemies.some(e=>e.hp>0&&e.id==='caolaou'))enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.15});
   // Monster passive init
-  if(allies.some(a=>a.hp>0&&a.id==='daxiong'))enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2});
-  if(enemies.some(e=>e.hp>0&&e.id==='daxiong'))allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=2});
+  if(allies.some(a=>a.hp>0&&a.id==='daxiong'))enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1});
+  if(enemies.some(e=>e.hp>0&&e.id==='daxiong'))allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1});
   enemies.forEach(e=>{
     if(e.name==='刺客')e.stealth=1;
     if(e.name==='兽王'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.06*alive);e.atkBuffTurns=99}
@@ -8881,7 +8881,7 @@ function startRealm(){
     if(e.name==='狼王'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;enemies.forEach(ally=>{ally.spd+=1});e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
     if(e.name==='狼头人'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.04*alive);e.atkBuffTurns=99}
     if(e.name==='马哥'&&enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.2);e.atkBuffTurns=99;e.spd+=1}
-    if(e.name==='堕落主教'){enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.15}})}
+    if(e.name==='堕落主教'){enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.155}})}
     if(e.name==='法老棺椁')e._noCrit=true;
   });
   realmState={diff};
@@ -9138,7 +9138,7 @@ function startEndless(){
   if(allies.some(a=>a.hp>0&&a.id==='zhangjihua'))allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(allies.some(a=>a.hp>0&&a.id==='dongrab'))allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
   if(allies.some(a=>a.hp>0&&a.id==='nttt')){const pct=allies.find(a=>a.hp>0&&a.id==='nttt').relic?0.15*1.06:0.15;allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*pct)})}
-  if(allies.some(a=>a.hp>0&&a.id==='caolaou'))allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
+  if(allies.some(a=>a.hp>0&&a.id==='caolaou'))allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
   // 初始化无尽状态
   endlessState={wave:1,allies,totalDmg:{},totalHeal:{},totalAbsorb:{}};
   endlessState.allies.forEach(a=>{endlessState.totalDmg[a.uid]=0;endlessState.totalHeal[a.uid]=0;endlessState.totalAbsorb[a.uid]=0});
@@ -9161,11 +9161,11 @@ function startEndlessWave(){
   if(enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
   if(enemies.some(e=>e.hp>0&&e.id==='dongrab'))enemies.filter(e=>e.pos.row==='back').forEach(e=>{e.crit+=5});
   if(enemies.some(e=>e.hp>0&&e.id==='nttt')){const pct=enemies.find(e=>e.hp>0&&e.id==='nttt').relic?0.15*1.06:0.15;enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*pct)})}
-  if(enemies.some(e=>e.hp>0&&e.id==='caolaou'))enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.1});
+  if(enemies.some(e=>e.hp>0&&e.id==='caolaou'))enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.15});
   // 怪物被动
   const allies=es.allies;
-  if(allies.some(a=>a.hp>0&&a.id==='daxiong'))enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2});
-  if(enemies.some(e=>e.hp>0&&e.id==='daxiong'))allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=2});
+  if(allies.some(a=>a.hp>0&&a.id==='daxiong'))enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1});
+  if(enemies.some(e=>e.hp>0&&e.id==='daxiong'))allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1});
   enemies.forEach(e=>{
     if(e.name==='刺客')e.stealth=1;
     if(e.name==='兽王'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.06*alive);e.atkBuffTurns=99}
@@ -9176,7 +9176,7 @@ function startEndlessWave(){
     if(e.name==='狼王'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;enemies.forEach(ally=>{ally.spd+=1});e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
     if(e.name==='狼头人'){const alive=enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.04*alive);e.atkBuffTurns=99}
     if(e.name==='马哥'&&enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.2);e.atkBuffTurns=99;e.spd+=1}
-    if(e.name==='堕落主教'){enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.15}})}
+    if(e.name==='堕落主教'){enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.155}})}
     if(e.name==='法老棺椁')e._noCrit=true;
   });
   // 友军清战场状态但保留血量
@@ -9682,7 +9682,7 @@ function startChallenge(chId,diffKey){
     if(e.name==='狼王'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;B.enemies.forEach(ally=>{ally.spd+=1});e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.08*alive);e.atkBuffTurns=99}
     if(e.name==='狼头人'){const alive=B.enemies.filter(x=>x.hp>0&&x!==e).length;e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.04*alive);e.atkBuffTurns=99}
     if(e.name==='马哥'&&B.enemies.filter(x=>x.hp>0&&x!==e).length===0){e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*0.2);e.atkBuffTurns=99;e.spd+=1}
-    if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.15}})}
+    if(e.name==='堕落主教'){B.enemies.forEach(ally=>{if(ally.hp>0){ally.dmgReduce=3;ally.dmgReduceAmt=0.155}})}
     if(e.name==='法老棺椁')e._noCrit=true;
   });
   playBGM(chId||'battle');
@@ -10006,16 +10006,16 @@ function startPvpBattle(){
   B.enemies.forEach(e=>{if(e.id==='shield')e.defBuff=e.def;if(e.id==='sange')e.taunt=true,e.tauntPerm=true;if(e.id==='zhangxuyang')e.hp=Math.round(e.maxHp/5);if(e.id==='swordsman'||e.id==='xu'||e.id==='ziranwupo')e.debuffImmune=true});
   if(B.allies.some(a=>a.hp>0&&a.id==='denglikai'))B.allies.forEach(a=>{a.spd+=1;a.defBuff=(a.defBuff||0)+Math.round(a.def*0.2)});
   if(B.enemies.some(e=>e.hp>0&&e.id==='denglikai'))B.enemies.forEach(e=>{e.spd+=1;e.defBuff=(e.defBuff||0)+Math.round(e.def*0.2)});
-  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=2});
-  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=2});
+  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1});
   if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
   if(B.enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))B.enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
   if(B.allies.some(a=>a.hp>0&&a.id==='dongrab'))B.allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
   if(B.enemies.some(e=>e.hp>0&&e.id==='dongrab'))B.enemies.filter(e=>e.pos.row==='back').forEach(e=>{e.crit+=5});
   if(B.allies.some(a=>a.hp>0&&a.id==='nttt'))B.allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*ntttBuffPct())});
   if(B.enemies.some(e=>e.hp>0&&e.id==='nttt'))B.enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*ntttBuffPctE())});
-  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.1});
-  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.1});
+  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.15});
   G.auto=true;syncBattleUI();showScreen('battle');buildOrder();renderB();
   playBGM('pvp');
   B.log.push(`<b style="color:#e74c3c">── 竞技决斗 ──</b>`);
