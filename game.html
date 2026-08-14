@@ -237,22 +237,32 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .b-vs{font-size:32px;font-weight:bold;color:var(--red);text-shadow:0 0 20px var(--red);letter-spacing:3px}
 
 /* Action names floating above actor */
-.action-label{position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:bold;white-space:nowrap;padding:3px 10px;border-radius:6px;z-index:60;animation:labelPop .5s ease-out;pointer-events:none}
+.action-label{position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:bold;white-space:nowrap;padding:3px 10px;border-radius:6px;z-index:60;animation:labelPop .45s cubic-bezier(.22,1.2,.55,1);pointer-events:none}
 .action-label.atk-label{background:rgba(192,57,43,.9);color:#fff}
-.action-label.sk-label{background:rgba(212,168,70,.95);color:#1a1a2e}
-@keyframes labelPop{0%{opacity:0;transform:translateX(-50%) scale(.5) translateY(10px)}50%{opacity:1;transform:translateX(-50%) scale(1.15) translateY(-2px)}100%{opacity:1;transform:translateX(-50%) scale(1) translateY(0)}}
+.action-label.sk-label{background:rgba(232,197,78,.95);color:#0a0815}
+@keyframes labelPop{0%{opacity:0;transform:translateX(-50%) scale(.4) translateY(12px)}40%{opacity:1;transform:translateX(-50%) scale(1.12) translateY(-1px)}100%{opacity:1;transform:translateX(-50%) scale(1) translateY(0)}}
 
-/* Attack animation classes */
-.bu.anim-lunge{animation:lunge .45s ease-out}
-@keyframes lunge{0%{transform:translateX(0)}30%{transform:translateX(22px) scale(1.08)}100%{transform:translateX(0) scale(1)}}
-.bu.anim-lunge-back{animation:lungeBack .45s ease-out}
-@keyframes lungeBack{0%{transform:translateX(0)}30%{transform:translateX(-22px) scale(1.08)}100%{transform:translateX(0) scale(1)}}
-.bu.anim-hit{animation:hitShake .35s ease-out}
-@keyframes hitShake{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-5px)}60%{transform:translateX(5px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
-.bu.anim-skill-cast{animation:skillCast .6s ease-out}
-@keyframes skillCast{0%{transform:scale(1);filter:brightness(1)}25%{transform:scale(1.15);filter:brightness(1.8)}50%{transform:scale(1.05);filter:brightness(1.3)}100%{transform:scale(1);filter:brightness(1)}}
-.bu.anim-heal-glow{animation:healGlow .7s ease-out}
-@keyframes healGlow{0%{box-shadow:0 0 0 rgba(46,204,113,0)}30%{box-shadow:0 0 30px 8px rgba(46,204,113,.6)}100%{box-shadow:0 0 0 rgba(46,204,113,0)}}
+/* GPU acceleration for battle units & damage popups */
+.bu,.dmg{will-change:transform,opacity}
+.bu.anim-lunge,.bu.anim-lunge-back,.bu.anim-hit,.bu.anim-skill-cast{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+
+/* Attack animation classes — spring-curve lunges with elastic return */
+.bu.anim-lunge{animation:lunge .4s cubic-bezier(.22,1.2,.55,1)}
+@keyframes lunge{0%{transform:translateX(0) scale(1)}25%{transform:translateX(20px) scale(1.06)}50%{transform:translateX(24px) scale(1.08)}80%{transform:translateX(-3px) scale(1)}100%{transform:translateX(0) scale(1)}}
+.bu.anim-lunge-back{animation:lungeBack .4s cubic-bezier(.22,1.2,.55,1)}
+@keyframes lungeBack{0%{transform:translateX(0) scale(1)}25%{transform:translateX(-20px) scale(1.06)}50%{transform:translateX(-24px) scale(1.08)}80%{transform:translateX(3px) scale(1)}100%{transform:translateX(0) scale(1)}}
+
+/* Hit shake — dampened oscillation with natural decay */
+.bu.anim-hit{animation:hitShake .35s cubic-bezier(.25,.8,.25,1)}
+@keyframes hitShake{0%{transform:translateX(0)}12%{transform:translateX(-7px)}24%{transform:translateX(6px)}36%{transform:translateX(-4px)}50%{transform:translateX(3px)}64%{transform:translateX(-1.5px)}78%{transform:translateX(1px)}100%{transform:translateX(0)}}
+
+/* Skill cast — smoother glow ramp with overshoot */
+.bu.anim-skill-cast{animation:skillCast .55s cubic-bezier(.22,1,.55,1)}
+@keyframes skillCast{0%{transform:scale(1);filter:brightness(1)}20%{transform:scale(1.12);filter:brightness(1.7)}45%{transform:scale(1.06);filter:brightness(1.35)}75%{transform:scale(1.02);filter:brightness(1.1)}100%{transform:scale(1);filter:brightness(1)}}
+
+/* Heal glow — softer bloom */
+.bu.anim-heal-glow{animation:healGlow .65s ease-out}
+@keyframes healGlow{0%{box-shadow:0 0 0 rgba(46,204,113,0)}25%{box-shadow:0 0 25px 6px rgba(46,204,113,.55)}60%{box-shadow:0 0 15px 3px rgba(46,204,113,.3)}100%{box-shadow:0 0 0 rgba(46,204,113,0)}}
 
 /* Screen flash */
 .screen-flash{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:250;animation:flash .3s ease-out forwards}
@@ -261,17 +271,20 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .screen-flash.green{background:rgba(46,204,113,.2)}
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
 
-/* Screen shake */
-.bf.shake{animation:screenShake .35s ease-out}
-@keyframes screenShake{0%{transform:translate(0)}15%{transform:translate(-6px,3px)}30%{transform:translate(5px,-4px)}45%{transform:translate(-4px,2px)}60%{transform:translate(3px,-2px)}75%{transform:translate(-2px,1px)}100%{transform:translate(0)}}
+/* Screen shake — subtler, dampened */
+.bf.shake{animation:screenShake .3s cubic-bezier(.25,.8,.25,1)}
+@keyframes screenShake{0%{transform:translate(0)}15%{transform:translate(-4px,2px)}30%{transform:translate(3px,-3px)}45%{transform:translate(-3px,1px)}60%{transform:translate(2px,-1px)}80%{transform:translate(-1px,1px)}100%{transform:translate(0)}}
 
-/* Damage popup - ENHANCED */
-.dmg{position:absolute;font-weight:bold;pointer-events:none;z-index:50;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 12px currentColor}
-.dmg.crit{font-size:24px;color:var(--gold);animation:dmgCrit 1.1s ease-out forwards}
-.dmg.norm{font-size:17px;color:#ff6b6b;animation:dmgNorm 1s ease-out forwards}
-.dmg.heal{font-size:17px;color:var(--green);animation:dmgHeal 1s ease-out forwards}
-.dmg.skill{font-size:20px;color:#3498db;animation:dmgCrit 1.1s ease-out forwards}
-.dmg.thorns{font-size:17px;color:#e67e22;animation:dmgNorm 1s ease-out forwards}
+/* Damage popup — spring-in + float-up with fade */
+.dmg{position:absolute;font-weight:bold;pointer-events:none;z-index:50;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 12px currentColor;will-change:transform,opacity}
+.dmg.crit{font-size:24px;color:var(--gold);animation:dmgCrit 1s cubic-bezier(.22,1,.55,1) forwards}
+@keyframes dmgCrit{0%{opacity:1;transform:translateY(0) scale(.5)}12%{opacity:1;transform:translateY(-6px) scale(1.4)}30%{opacity:1;transform:translateY(-16px) scale(1.1)}60%{opacity:1;transform:translateY(-30px) scale(1)}100%{opacity:0;transform:translateY(-48px) scale(.85)}}
+.dmg.norm{font-size:17px;color:#ff6b6b;animation:dmgNorm .9s cubic-bezier(.22,1,.55,1) forwards}
+@keyframes dmgNorm{0%{opacity:1;transform:translateY(0) scale(.6)}15%{opacity:1;transform:translateY(-8px) scale(1.2)}40%{opacity:1;transform:translateY(-18px) scale(1)}100%{opacity:0;transform:translateY(-42px) scale(.85)}}
+.dmg.heal{font-size:17px;color:var(--green);animation:dmgHeal .9s cubic-bezier(.22,1,.55,1) forwards}
+@keyframes dmgHeal{0%{opacity:1;transform:translateY(0) scale(.6)}18%{opacity:1;transform:translateY(-10px) scale(1.15)}45%{opacity:1;transform:translateY(-20px) scale(1)}100%{opacity:0;transform:translateY(-46px) scale(.85)}}
+.dmg.skill{font-size:20px;color:#3498db;animation:dmgCrit 1s cubic-bezier(.22,1,.55,1) forwards}
+.dmg.thorns{font-size:17px;color:#e67e22;animation:dmgNorm .9s cubic-bezier(.22,1,.55,1) forwards}
 @keyframes dmgCrit{0%{opacity:1;transform:translateY(0) scale(.6)}15%{opacity:1;transform:translateY(-8px) scale(1.5)}40%{opacity:1;transform:translateY(-20px) scale(1.1)}100%{opacity:0;transform:translateY(-55px) scale(.7)}}
 @keyframes dmgNorm{0%{opacity:1;transform:translateY(0) scale(.7)}15%{opacity:1;transform:translateY(-10px) scale(1.2)}40%{opacity:1;transform:translateY(-22px) scale(1)}100%{opacity:0;transform:translateY(-50px) scale(.7)}}
 @keyframes dmgHeal{0%{opacity:1;transform:translateY(0) scale(.7)}20%{opacity:1;transform:translateY(-12px) scale(1.2)}50%{opacity:1;transform:translateY(-25px) scale(1)}100%{opacity:0;transform:translateY(-55px) scale(.7)}}
@@ -285,8 +298,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .sk-btn{width:72px;height:72px;border:2px solid var(--iron);border-radius:10px;background:linear-gradient(160deg,var(--card),var(--card2));cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.15s;position:relative;-webkit-tap-highlight-color:transparent;user-select:none}
 .sk-btn:hover{border-color:var(--gold);background:var(--card2);box-shadow:0 0 8px var(--glow-gold)}
 .sk-btn:active{transform:scale(.92);background:rgba(232,197,78,.15)}
-.sk-btn:active{transform:scale(.92);background:rgba(212,168,70,.15)}
-.sk-btn.on{border-color:var(--gold);box-shadow:0 0 12px var(--glow-gold);background:rgba(212,168,70,.1)}
+.sk-btn.on{border-color:var(--gold);box-shadow:0 0 12px var(--glow-gold);background:rgba(232,197,78,.1)}
 .sk-btn.cd{opacity:.35;cursor:not-allowed}
 .sk-btn.silenced{opacity:.5;border-color:#9b59b6!important;box-shadow:0 0 6px #9b59b6}
 .sk-btn img{width:32px;height:32px;object-fit:contain}
@@ -4439,8 +4451,11 @@ function animClass(uid,cls,dur){
   // 死亡单位不播放攻击/受击/冲刺动画（允许治疗/复活动画）
   if(el.classList.contains('dead')&&!cls.includes('heal'))return Promise.resolve();
   return new Promise(r=>{
+    // Use rAF to ensure class is applied before the next paint
     el.classList.add(cls);
-    setTimeout(()=>{el.classList.remove(cls);r()},dur);
+    const start=performance.now();
+    const tick=()=>{if(performance.now()-start>=dur){el.classList.remove(cls);r();return}requestAnimationFrame(tick)};
+    requestAnimationFrame(tick);
   });
 }
 
