@@ -4364,6 +4364,8 @@ function syncBattleUI(){const ba=document.getElementById('btnAuto');if(ba){ba.cl
 function animClass(uid,cls,dur){
   const el=document.getElementById('bu-'+uid);
   if(!el)return Promise.resolve();
+  // 死亡单位不播放攻击/受击/冲刺动画（允许治疗/复活动画）
+  if(el.classList.contains('dead')&&!cls.includes('heal'))return Promise.resolve();
   return new Promise(r=>{
     el.classList.add(cls);
     setTimeout(()=>{el.classList.remove(cls);r()},dur);
@@ -4401,6 +4403,8 @@ function shakeScreen(){
 function showDmg(uid,amt,type){
   const el=document.getElementById('bu-'+uid);
   if(!el)return;
+  // 死亡单位不显示伤害弹字（治疗/复活除外）
+  if(el.classList.contains('dead')&&type!=='heal')return;
   const pop=document.createElement('div');
   pop.className='dmg '+type;
   pop.textContent=(type==='heal'?'+':type==='thorns'?'🌵-':'-')+amt;
@@ -5211,12 +5215,21 @@ function applyHeal(target,rawHeal){
   if(target.relic&&target._relicId==='huangzi'){const orig=h;h=Math.round(h*(1+0.15*(target.relicMult||1)));if(h!==orig)B.log.push(`<span style="color:#2ecc71">🎵 ${target.name} 播放器加持！${orig}→${h}</span>`)}
   const old=target.hp;target.hp=Math.min(target.maxHp,target.hp+h);
   const healed=target.hp-old; // 溢出部分直接丢失
-  // 付骞被动：敌人治疗时免费攻击
+  // 付骞被动：敌人治疗时免费攻击（同步简化版，避免异步动画与主循环冲突）
   if(healed>0&&target.isE!==undefined){
     const fq=[...B.allies,...B.enemies].find(a=>a.hp>0&&a.id==='fuqian'&&a.isE!==target.isE);
     if(fq){
-      B.log.push(`<span style="color:#c0392b">${fq.name} 惩治治疗！</span>`);
-      execAttackAnim(fq,fq.isE?B.enemies:B.allies,fq.isE?B.allies:B.enemies,'惩治').catch(()=>{});
+      const fqEnemies=fq.isE?B.allies:B.enemies;
+      const tgt=fqEnemies.find(e=>e.hp>0);
+      if(tgt){
+        const def=tgt.def+(tgt.defBuff||0)+(tgt.defBuff2||0);
+        let dmg=Math.max(1,ea(fq)-def);
+        const isCrit=Math.random()*100<fq.crit;
+        if(isCrit)dmg=Math.round(dmg*fq.cdmg);
+        const rd=applyDmg(fq,tgt,dmg);
+        B.log.push(`<span style="color:#c0392b">${fq.name} 惩治治疗！→ ${tgt.name} ${isCrit?'暴击!':''}${rd}伤害</span>`);
+        if(tgt.hp<=0)checkKill(fq,tgt,fq.isE?B.enemies:B.allies);
+      }
     }
   }
   return healed;
@@ -7164,6 +7177,11 @@ function endBattle(vic){
     const winner=olRole==='host'?(vic?'host':'client'):(vic?'client':'host');
     // 房主发送战斗结束给对手
     if(olConn&&olConn.open){
+      // 最后刷新一次日志缓冲
+      if(B._olLogBuffer&&B._olLogBuffer.length>0){
+        olSend({type:'battle_log',log:B._olLogBuffer.join('<br>'),round:B.round});
+        B._olLogBuffer=[];
+      }
       olSend({type:'battle_end',winner});
     }
     // 清理发送定时器
@@ -8101,7 +8119,7 @@ function rCodexHero(){
     card.onclick=()=>openCodexModal(id);
     card.innerHTML=`
       ${!owned?'<div class="cd-lock-icon">🔒</div>':''}
-      <img class="cd-card-img" src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'" onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')">
+      <img class="cd-card-img" src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'" onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')">
       <div class="cd-card-name">${d.name}</div>
       <div class="cd-card-stars">${starStr}</div>
       <div class="cd-card-type">${d.row==='front'?'前排':'后排'} · ${d.rng==='melee'?'近战':'远程'}</div>
@@ -8170,7 +8188,7 @@ function renderCodexModal(id,star,owned,ownedStars){
   const skCd=d.skCd;
 
   document.getElementById('cdModalTop').innerHTML=`
-    <img class="cd-modal-portrait" src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'" style="cursor:pointer" onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')">
+    <img class="cd-modal-portrait" src="${imgUrl(d.img)}" alt="${d.name}" onerror="this.style.display='none'" style="cursor:pointer" onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')">
     <div class="cd-modal-name">${d.name}</div>
     <div class="cd-modal-stars-row">
       <div class="cd-modal-stars">${'★'.repeat(star)}${'☆'.repeat(Math.max(0,6-star))}</div>
@@ -8395,7 +8413,7 @@ function rCodexEquip(){
     card.onclick=()=>openEquipCodexModal(id);
     card.innerHTML=`
       ${!owned?'<div class="cd-lock-icon">🔒</div>':''}
-      <div class="cd-card-img" style="display:flex;align-items:center;justify-content:center;height:60px;${d.img?`cursor:pointer`:''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')"`:''}>${eqImg(d,48)}</div>
+      <div class="cd-card-img" style="display:flex;align-items:center;justify-content:center;height:60px;${d.img?`cursor:pointer`:''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')"`:''}>${eqImg(d,48)}</div>
       <div class="cd-card-name">${d.name}</div>
       <div class="cd-card-stars">${starStr}</div>
       <div class="cd-card-type">${EQ_TYPE_LABEL[d.type]||d.type}</div>
@@ -8442,7 +8460,7 @@ function renderEquipCodexModal(id,star,owned,ownedStars){
   const d=EQ[id];
 
   document.getElementById('cdModalTop').innerHTML=`
-    <div style="margin-bottom:4px;${d.img?'cursor:pointer':''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${imgUrl(d.img)}','${d.name}')"`:''}>${eqImg(d,48)}</div>
+    <div style="margin-bottom:4px;${d.img?'cursor:pointer':''}" ${d.img?`onclick="event.stopPropagation();showBigImg('${d.img}','${d.name}')"`:''}>${eqImg(d,48)}</div>
     <div class="cd-modal-name">${d.name}</div>
     <div class="cd-modal-stars-row">
       <div class="cd-modal-stars">${'★'.repeat(star)}${'☆'.repeat(Math.max(0,6-star))}</div>
@@ -10810,6 +10828,17 @@ function olRunHostBattle(){
     shieldFirst:true,busy:false,paused:false,stats:{},isOnlinePvp:true};
   B.allies.forEach(a=>{if(a.id==='denglikai')B.allies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
   B.enemies.forEach(e=>{if(e.id==='denglikai')B.enemies.forEach(x=>{x.spd+=1;x.defBuff=(x.defBuff||0)+Math.round(x.def*0.2)})});
+  // 补充与本地 PvP 一致的被动初始化
+  if(B.allies.some(a=>a.hp>0&&a.id==='daxiong'))B.enemies.forEach(e=>{e.spdReduce=99;e.spdReduceAmt=1});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='daxiong'))B.allies.forEach(a=>{a.spdReduce=99;a.spdReduceAmt=1});
+  if(B.allies.some(a=>a.hp>0&&a.id==='zhangjihua'))B.allies.forEach(a=>{a.crit+=5;a.cdmg+=0.5});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='zhangjihua'))B.enemies.forEach(e=>{e.crit+=5;e.cdmg+=0.5});
+  if(B.allies.some(a=>a.hp>0&&a.id==='dongrab'))B.allies.filter(a=>a.pos.row==='back').forEach(a=>{a.crit+=5});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='dongrab'))B.enemies.filter(e=>e.pos.row==='back').forEach(e=>{e.crit+=5});
+  if(B.allies.some(a=>a.hp>0&&a.id==='nttt'))B.allies.filter(a=>a.hp>0).forEach(a=>{a.atkBuff=(a.atkBuff||0)+Math.round(a.atk*ntttBuffPct())});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='nttt'))B.enemies.filter(e=>e.hp>0).forEach(e=>{e.atkBuff=(e.atkBuff||0)+Math.round(e.atk*ntttBuffPctE())});
+  if(B.allies.some(a=>a.hp>0&&a.id==='caolaou'))B.allies.filter(a=>a.pos.row==='front'&&a.hp>0).forEach(a=>{a.dmgReduce=99;a.dmgReduceAmt=0.15});
+  if(B.enemies.some(e=>e.hp>0&&e.id==='caolaou'))B.enemies.filter(e=>e.pos.row==='front'&&e.hp>0).forEach(e=>{e.dmgReduce=99;e.dmgReduceAmt=0.15});
   
   // 监听战斗日志发送给客户端
   const origLog=B.log;
