@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="我的战争">
@@ -12,6 +12,7 @@
 <title>MyWar - 战斗游戏</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+html{height:100%;overflow:hidden;background:var(--bg)}
 :root{--bg:#1a1008;--bg2:#221608;--bg3:#2a1e10;--red:#e0453b;--red2:#8b1a1a;--gold:#e8c54e;--gold2:#c9a030;--green:#4ec078;--blue:#d4a846;--purple:#c9a030;--text:#f0e6d0;--text2:#b8a880;--card:#2a1e10;--card2:#1a1008;--border:#4a3218;--parchment:#e8d8b8;--leather:#3e2a1a;--iron:#6a6050;--glow-gold:rgba(232,197,78,.3);--glow-red:rgba(224,69,59,.3);--shadow:0 4px 24px rgba(0,0,0,.4)}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI','Microsoft YaHei',sans-serif;overflow:hidden;height:100vh;width:100vw;user-select:none;letter-spacing:.3px}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 20%,rgba(74,50,24,.4) 0%,transparent 60%),repeating-linear-gradient(127deg,rgba(42,30,16,.15) 0px,transparent 3px,rgba(42,30,16,.08) 6px,transparent 9px),repeating-linear-gradient(43deg,rgba(34,22,8,.12) 0px,transparent 4px,rgba(34,22,8,.06) 8px,transparent 12px);opacity:.8}
@@ -596,6 +597,12 @@ body.show-nav .screen{height:calc(100vh - 88px)}
   .ns-lbl{font-size:10px!important}
   .ns-ring{font-size:18px!important;width:30px!important;height:30px!important}
   .nav-gem{display:none!important}
+
+  /* === Safe area & touch targets (APK/mobile only, harmless on desktop touch screens > 900px) === */
+  body.touch-device #nav{padding-bottom:max(env(safe-area-inset-bottom),0px)}
+  body.touch-device #screen-hub{padding-top:max(env(safe-area-inset-top),0px)}
+  body.touch-device #titleScreen{padding:max(env(safe-area-inset-top),0px) max(env(safe-area-inset-right),0px) max(env(safe-area-inset-bottom),0px) max(env(safe-area-inset-left),0px)}
+  body.touch-device #titleSlots button{min-height:44px;padding:10px 18px!important;font-size:14px!important}
 
   /* === Titles === */
   .med-title{font-size:16px!important;margin:6px 8px 4px!important;padding:4px 8px!important;letter-spacing:2px!important}
@@ -3323,18 +3330,18 @@ function showScreen(s){
 // 10章地图 + PvP/联机共用竞技场地图
 // 图片文件放在 bg/ 目录下，后续替换为实际图片
 const BATTLE_BG={
-  1:'bg/forest.jpg',       // 暗夜森林
-  2:'bg/graveyard.jpg',    // 亡灵墓地
-  3:'bg/abyss.jpg',        // 深渊裂谷
-  4:'bg/castle.jpg',       // 魔王殿堂
-  5:'bg/swamp.jpg',        // 诅咒沼泽
-  6:'bg/doom.jpg',         // 终焉之地
-  7:'bg/beast.jpg',        // 暗夜兽林
-  8:'bg/plague.jpg',       // 瘟疫深渊
-  9:'bg/vampire.jpg',      // 血夜古堡
-  10:'bg/temple.jpg',      // 远古神殿
-  arena:'bg/arena.jpg',     // 竞技场（PvP/联机/竞技场共用）
-  realm:'bg/realm.jpg',     // 秘境
+  1:'战场背景/暗夜森林.jpg',       // 暗夜森林
+  2:'战场背景/亡灵墓地.jpg',    // 亡灵墓地
+  3:'战场背景/深渊裂谷.jpg',        // 深渊裂谷
+  4:'战场背景/魔王殿堂.jpg',       // 魔王殿堂
+  5:'战场背景/诅咒沼泽.jpg',        // 诅咒沼泽
+  6:'战场背景/终焉之地.jpg',         // 终焉之地
+  7:'战场背景/暗夜兽林.jpg',        // 暗夜兽林
+  8:'战场背景/瘟疫深渊.jpg',       // 瘟疫深渊
+  9:'战场背景/血夜古堡.jpg',      // 血夜古堡
+  10:'战场背景/远古神殿.jpg',      // 远古神殿
+  arena:'战场背景/竞技场.png',     // 竞技场（PvP/联机/竞技场共用）
+  realm:'战场背景/秘境.jpg',     // 秘境
   hunt:'战场背景/猎人岛.png'  // 狩猎小岛专用
 };
 const BATTLE_BG_ALL=[1,2,3,4,5,6,7,8,9,10].map(i=>BATTLE_BG[i]);
