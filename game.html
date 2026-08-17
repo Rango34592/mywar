@@ -5806,13 +5806,13 @@ function genEnemies(lv){
   const lvIdx=lv%LEVELS_PER_CHAPTER;
   const isMiniBoss=(lvIdx===4);
   const isBigBoss=(lvIdx===9);
-  const bossMult=isBigBoss?1.4:isMiniBoss?1.25:1;
+  const bossMult=isBigBoss?1.35:isMiniBoss?1.2:1;
   // Monster rank: chapters 0-2 → rank 0-2, chapters 3-5 → rank 3-5, ch6+ → rank 6-9
   let monsterRank=Math.min(9,ch);
   // Mini-boss +1 rank, big boss +2 rank
   if(isBigBoss)monsterRank=Math.min(9,monsterRank+2);
   else if(isMiniBoss)monsterRank=Math.min(9,monsterRank+1);
-  const monRankMult=1+monsterRank*0.1; // Each rank +10% stats (like heroes +5% but stronger)
+  const monRankMult=1+monsterRank*0.09; // Each rank +9% stats (slightly toned down from 10%)
   const es=[];let fCnt=0;
   for(let i=0;i<cnt;i++){
     const b=pool[ri(0,pool.length-1)];
@@ -5822,7 +5822,7 @@ function genEnemies(lv){
     // Beyond chapter 5, all are 6★ but get extra scaling per chapter
     const mStar=Math.min(6,b.minStar+ch);
     const sm=Math.pow(MON_MULT,mStar-1);
-    const chScale=ch>=6?1+(ch-5)*0.15:1; // Ch7 +15%, Ch8 +30%, Ch9 +45%, Ch10 +60%
+    const chScale=ch>=6?1+(ch-5)*0.12:1; // Ch7 +12%, Ch8 +24%, Ch9 +36%, Ch10 +48% (toned down from 15%)
     es.push({...b,atk:Math.round(b.atk*sm*bossMult*chScale*monRankMult),def:Math.round(b.def*sm*bossMult*chScale*monRankMult),
       hp:Math.round(b.hp*sm*bossMult*chScale*monRankMult),maxHp:Math.round(b.hp*sm*bossMult*chScale*monRankMult),
       star:mStar,_rank:monsterRank,
